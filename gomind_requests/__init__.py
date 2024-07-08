@@ -168,7 +168,7 @@ def insertLog(url, token, robot_id, customer_id, data):
 
     return response
 
-def sendStap(url, token, robot_id, customer_id, data):
+def sendStep(url, token, robot_id, customer_id, data):
     data_keys = [
         "action",
         "status"
