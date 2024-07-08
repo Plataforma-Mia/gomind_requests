@@ -1,5 +1,7 @@
 import requests
 from dataclasses import dataclass
+import boto3
+import os
 
 
 @dataclass
@@ -120,7 +122,8 @@ def sendCustomerEmployee(url, token, robot_id, customer_id, data):#testar
     ]
     
     if len(data) != len(data_keys):
-        return "Quantidade de campos inválida"
+        print("Quantidade de campos inválida")
+        return False
     
     data = dict(zip(data_keys, data))
 
@@ -141,14 +144,15 @@ def sendCustomerEmployee(url, token, robot_id, customer_id, data):#testar
     return response
 
 
-def insertLog(url, token, robot_id, customer_id, data):
+def sendLog(url, token, robot_id, customer_id, data):
     data_keys = [
         "action",
         "status"
     ]
 
     if len(data) != len(data_keys):
-        return "Quantidade de campos inválida"
+        print("Quantidade de campos inválida")
+        return False
     
     data = dict(zip(data_keys, data))
 
@@ -168,14 +172,15 @@ def insertLog(url, token, robot_id, customer_id, data):
 
     return response
 
-def sendStep(url, token, robot_id, customer_id, data):
+def sendStap(url, token, robot_id, customer_id, data):
     data_keys = [
-        "action",
+        "step",
         "status"
     ]
 
     if len(data) != len(data_keys):
-        return "Quantidade de campos inválida"
+        print("Quantidade de campos inválida")
+        return False
     
     data = dict(zip(data_keys, data))
 
@@ -202,3 +207,38 @@ def getStep(url, token, robot_id, customer_id):
         'status': 'success'
     }
     return data
+
+
+def send_files_to_s3(
+    files_path: str, client_id: str | int, robot_id: str | int
+) -> None:
+    s3 = boto3.client("s3")
+    bucket_name = "repositorio-mia"
+
+    # Verificar se o diretório existe
+    if not os.path.exists(files_path):
+        print(f"O diretório {files_path} não existe.")
+        return
+
+    # Listar arquivos no diretório
+    files = os.listdir(files_path)
+
+    # Verificar se há arquivos no diretório
+    if not files:
+        print(f"Não há arquivos para enviar no diretório {files_path}.")
+        return
+
+    # Upload de arquivos para o S3
+    for file in files:
+        file_path = os.path.join(files_path, file)
+        s3_file_path = f"clients/{client_id}/robot/{robot_id}/{file}"
+
+        try:
+            s3.upload_file(file_path, bucket_name, s3_file_path)
+            print(
+                f"Arquivo {file_path} enviado para {s3_file_path} no bucket {bucket_name}."
+            )
+        except Exception as e:
+            print(f"Erro ao enviar {file_path} para {s3_file_path}: {e}")
+
+    print("Envio de arquivos concluído.")
