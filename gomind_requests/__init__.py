@@ -209,7 +209,7 @@ def getStep(url, token, robot_id, customer_id):
     return data
 
 
-def send_files_to_s3(
+def sendFilesToS3(
     files_path: str, client_id: str | int, robot_id: str | int
 ) -> None:
     s3 = boto3.client("s3")
