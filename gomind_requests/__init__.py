@@ -1,0 +1,204 @@
+import requests
+from dataclasses import dataclass
+
+
+@dataclass
+class CustomersData:
+    #informações do cliente
+    id:                         str | None
+    customer_id:                str | None
+    office_configuration_id:    str | None
+    erp_code:                   str | None 
+    social_name:                str | None 
+    fantasy_name:               str | None 
+    document:                   str | None 
+    certificate_name:           str | None 
+    digital_certificate:        str | None 
+    municipal_registration:     str | None
+    state_registration:         str | None 
+    type_tax:                   str | None 
+    total_partners:             str | None
+
+@dataclass
+class OfficeConfig:
+    #configurações do escritório
+    id:                         str | None
+    customer_id:                str | None
+    office_document:            str | None
+    office_description:         str | None
+    usuario:                    str | None
+    senha:                      str | None
+    usuario_nibo:               str | None
+    senha_nibo:                 str | None
+    usuario_dominio:            str | None
+    senha_dominio:              str | None
+    diretorio:                  str | None
+    destinatario_email:         str | None
+    email_cc:                   str | None
+    unidade_dominio:            str | None
+    employer_web_user:          str | None
+    employer_web_password:      str | None
+    download_source:            str | None
+    temp_path:                  str | None
+    created_at:                 str | None
+    updated_at:                 str | None
+
+@dataclass
+class TotalData:
+    customers:  list
+    config:     object   
+
+
+def getOfficeData(data) -> OfficeConfig:
+    return OfficeConfig(*data.values())
+
+
+def getCustomerData(data) -> CustomersData:
+    return CustomersData(*data.values())
+
+
+def getTotalData(data, config) -> TotalData:
+    return TotalData(data, config)
+
+
+def getToken(url, email, passwd):
+    payload = {
+        'email':    str(email),
+        'password': str(passwd)
+    }
+    response = requests.post(f'{url}/api/login', json=payload)
+    
+    try:
+        response = response.json()['token']
+    except:
+        response = False
+
+    return response
+
+
+def getCustomersByRobot(url, token, id):
+    header      = {"Authorization": f"Bearer {token}"}
+    response    = requests.get(f'{url}/api/customers_by_robot?robot_id={id}&all_data=true', headers=header) 
+
+    try:
+        response = response.json()['customers_by_robot']
+    except:
+        response = False
+
+    return response
+
+
+def dataConfig(url, token, robot_id) -> CustomersData:
+    dataList    = []
+    data        = getCustomersByRobot(url, token, robot_id)
+
+    if isinstance(data, str):
+        return False
+
+    config      = getOfficeData(data[0]['office_configuration'])
+    toRemove    = {'office_configuration','updated_at', 'created_at'}
+
+    for object in data:
+        clientInfo  = {k: v for k, v in object.items() if k not in toRemove}
+        dataList.append(getCustomerData(clientInfo))
+
+    return getTotalData(dataList, config)
+
+
+def sendCustomerEmployee(url, token, robot_id, customer_id, data):#testar
+    data_keys = [
+        "nome",
+        "cpf",
+        "pis",
+        "cod_colaborador_dominio",
+        "data_admissao",
+        "data_demissao",
+        "motivo_rescisao",
+        "data_aviso",
+        "tipo_aviso",
+        "data_pgto"
+    ]
+    
+    if len(data) != len(data_keys):
+        return "Quantidade de campos inválida"
+    
+    data = dict(zip(data_keys, data))
+
+    payload = {
+        'robot_id':         f'{robot_id}',
+        'customer_id':      f'{customer_id}',
+        'employee_log':     data  
+    }
+
+    header      = {"Authorization": f"Bearer {token}"}
+    response    = requests.post(f'{url}/api/customer_employee', json=payload, headers=header)
+
+    try:
+        response = response.json()
+    except:
+        response = False
+
+    return response
+
+
+def insertLog(url, token, robot_id, customer_id, data):
+    data_keys = [
+        "action",
+        "status"
+    ]
+
+    if len(data) != len(data_keys):
+        return "Quantidade de campos inválida"
+    
+    data = dict(zip(data_keys, data))
+
+    payload = {
+        'robot_id':     f'{robot_id}',
+        'customer_id':  f'{customer_id}',
+        'robot_log':    data
+    }
+
+    header      = {"Authorization": f"Bearer {token}"}
+    response    = requests.post(f'{url}/api/robot_log', json=payload, headers=header) 
+
+    try:
+        response = response.json()
+    except:
+        response = False
+
+    return response
+
+def sendStap(url, token, robot_id, customer_id, data):
+    data_keys = [
+        "action",
+        "status"
+    ]
+
+    if len(data) != len(data_keys):
+        return "Quantidade de campos inválida"
+    
+    data = dict(zip(data_keys, data))
+
+    payload = {
+        'robot_id':     f'{robot_id}',
+        'customer_id':  f'{customer_id}',
+        'robot_log':    data
+    }
+
+    header      = {"Authorization": f"Bearer {token}"}
+    response    = requests.post(f'{url}/api/robot_log', json=payload, headers=header) 
+
+    try:
+        response = response.json()
+    except:
+        response = False
+
+    return response
+
+
+def getStep(url, token, robot_id, customer_id):
+    data = {
+        'step': 1,
+        'status': 'success'
+    }
+    return data
