@@ -44,7 +44,7 @@ class OfficeConfig:
     temp_path:                  str | None
     created_at:                 str | None
     updated_at:                 str | None
-    certificate:                str | None
+    certificate:                list | None
 
 @dataclass
 class TotalData:
@@ -98,12 +98,11 @@ def dataConfig(url, token, robot_id) -> CustomersData:
     if isinstance(data, str):
         return False
     try:
-        print(data[0]['customer'][0]['office_configuration'])
-        config      = getOfficeData(data[0]['customer'][0]['office_configuration'])
+        config      = getOfficeData(data[0]['office_configuration'])
         toRemove    = {'office_configuration','updated_at', 'created_at'}
 
         for object in data:
-            clientInfo  = {k: v for k, v in object['customer'][0].items() if k not in toRemove}
+            clientInfo  = {k: v for k, v in object.items() if k not in toRemove}
             dataList.append(getCustomerData(clientInfo))
 
         return getTotalData(dataList, config)
@@ -168,6 +167,17 @@ def sendLog(url, token, robot_id, customer_id, data):
 
     header      = {"Authorization": f"Bearer {token}"}
     response    = requests.post(f'{url}/api/robot_log', json=payload, headers=header) 
+
+    try:
+        response = response.json()
+    except:
+        response = False
+
+    return response
+
+def getAllLogs(url, token):
+    header      = {"Authorization": f"Bearer {token}"}
+    response    = requests.get(f'{url}/api/robot_log?all_data=true', headers=header) 
 
     try:
         response = response.json()
@@ -258,16 +268,12 @@ def sendFileToS3(
         print(f"O diretório {file_path} não existe.")
         return
 
-    # Listar arquivos no diretório
-    files = os.listdir(file_path)
-
     # Verificar se há arquivos no diretório
-    if not files:
+    if not os.path.isfile(file_path):
         print(f"Não há arquivos para enviar no diretório {file_path}.")
         return
 
     # Upload de arquivo para o S3
-   
     s3_file_path = f"clients/{client_id}/robot/{robot_id}/output/{file_path}"
 
     try:
@@ -279,5 +285,3 @@ def sendFileToS3(
         print(f"Erro ao enviar {file_path} para {s3_file_path}: {e}")
 
     print("Envio de arquivos concluído.")
-
-
