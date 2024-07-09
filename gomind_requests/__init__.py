@@ -44,6 +44,7 @@ class OfficeConfig:
     temp_path:                  str | None
     created_at:                 str | None
     updated_at:                 str | None
+    certificate:                str | None
 
 @dataclass
 class TotalData:
@@ -96,15 +97,18 @@ def dataConfig(url, token, robot_id) -> CustomersData:
 
     if isinstance(data, str):
         return False
+    try:
+        print(data[0]['customer'][0]['office_configuration'])
+        config      = getOfficeData(data[0]['customer'][0]['office_configuration'])
+        toRemove    = {'office_configuration','updated_at', 'created_at'}
 
-    config      = getOfficeData(data[0]['office_configuration'])
-    toRemove    = {'office_configuration','updated_at', 'created_at'}
+        for object in data:
+            clientInfo  = {k: v for k, v in object['customer'][0].items() if k not in toRemove}
+            dataList.append(getCustomerData(clientInfo))
 
-    for object in data:
-        clientInfo  = {k: v for k, v in object.items() if k not in toRemove}
-        dataList.append(getCustomerData(clientInfo))
-
-    return getTotalData(dataList, config)
+        return getTotalData(dataList, config)
+    except:
+        return False
 
 
 def sendCustomerEmployee(url, token, robot_id, customer_id, data):#testar
@@ -242,3 +246,38 @@ def sendFilesToS3(
             print(f"Erro ao enviar {file_path} para {s3_file_path}: {e}")
 
     print("Envio de arquivos concluído.")
+
+def sendFileToS3(
+    file_path: str, client_id: str | int, robot_id: str | int
+) -> None:
+    s3 = boto3.client("s3")
+    bucket_name = "repositorio-mia"
+
+    # Verificar se o diretório existe
+    if not os.path.exists(file_path):
+        print(f"O diretório {file_path} não existe.")
+        return
+
+    # Listar arquivos no diretório
+    files = os.listdir(file_path)
+
+    # Verificar se há arquivos no diretório
+    if not files:
+        print(f"Não há arquivos para enviar no diretório {file_path}.")
+        return
+
+    # Upload de arquivo para o S3
+   
+    s3_file_path = f"clients/{client_id}/robot/{robot_id}/output/{file_path}"
+
+    try:
+        s3.upload_file(file_path, bucket_name, s3_file_path)
+        print(
+            f"Arquivo {file_path} enviado para {s3_file_path} no bucket {bucket_name}."
+        )
+    except Exception as e:
+        print(f"Erro ao enviar {file_path} para {s3_file_path}: {e}")
+
+    print("Envio de arquivos concluído.")
+
+
