@@ -214,7 +214,7 @@ def getStep(url, token, robot_id, customer_id):
 
 
 def sendFilesToS3(
-    files_path: str, client_id: str | int, robot_id: str | int, mes: int, ano: int, nome_empresa: str = "ERROR", s3Dir_name: str=None
+    files_path: str, client_id: str | int, robot_id: str | int, mes: int = None, ano: int = None, nome_empresa: str = None, s3Dir_name: str=None
 ) -> None:
     s3 = boto3.client("s3")
     bucket_name = "repositorio-mia"
@@ -238,7 +238,10 @@ def sendFilesToS3(
     # Upload de arquivos para o S3
     for file in files:
         file_path = os.path.join(files_path, file)
-        s3_file_path = f"clients/{client_id}/robot/{robot_id}/{nome_empresa}/{mes}_{ano}/{file_path}"
+        if mes == None or ano == None:
+            s3_file_path = f"clients/{client_id}/robot/{robot_id}/{file_path}"
+        else:
+            s3_file_path = f"clients/{client_id}/robot/{robot_id}/{nome_empresa}/{mes}_{ano}/{file_path}"
 
         try:
             s3.upload_file(file_path, bucket_name, s3_file_path)
@@ -251,7 +254,7 @@ def sendFilesToS3(
     print("Envio de arquivos concluído.")
 
 def sendFileToS3(
-    file_path: str, client_id: str | int, robot_id: str | int, mes: int, ano: int, nome_empresa: str = "ERROR"
+    file_path: str, client_id: str | int, robot_id: str | int, mes: int = None, ano: int = None, nome_empresa: str = None
 ) -> None:
     s3 = boto3.client("s3")
     bucket_name = "repositorio-mia"
@@ -267,9 +270,10 @@ def sendFileToS3(
         return
 
     # Upload de arquivo para o S3
-    s3_file_path = f"clients/{client_id}/robot/{robot_id}/output/{file_path}"
-    s3_file_path = f"clients/{client_id}/robot/{robot_id}/{nome_empresa}/{mes}_{ano}/{file_path}"
-
+    if mes == None or ano == None:
+        s3_file_path = f"clients/{client_id}/robot/{robot_id}/{file_path}"
+    else:
+        s3_file_path = f"clients/{client_id}/robot/{robot_id}/{nome_empresa}/{mes}_{ano}/{file_path}"
 
     try:
         s3.upload_file(file_path, bucket_name, s3_file_path)
