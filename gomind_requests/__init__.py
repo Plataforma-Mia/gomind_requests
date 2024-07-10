@@ -186,17 +186,7 @@ def getAllLogs(url, token):
 
     return response
 
-def sendStap(url, token, robot_id, customer_id, data):
-    data_keys = [
-        "step",
-        "status"
-    ]
-
-    if len(data) != len(data_keys):
-        print("Quantidade de campos inválida")
-        return False
-    
-    data = dict(zip(data_keys, data))
+def sendStap(url, token, robot_id, customer_id, data:dict):
 
     payload = {
         'robot_id':     f'{robot_id}',
@@ -224,7 +214,7 @@ def getStep(url, token, robot_id, customer_id):
 
 
 def sendFilesToS3(
-    files_path: str, client_id: str | int, robot_id: str | int
+    files_path: str, client_id: str | int, robot_id: str | int, mes: int, ano: int, nome_empresa: str = "ERROR", s3Dir_name: str=None
 ) -> None:
     s3 = boto3.client("s3")
     bucket_name = "repositorio-mia"
@@ -242,10 +232,13 @@ def sendFilesToS3(
         print(f"Não há arquivos para enviar no diretório {files_path}.")
         return
 
+    if s3Dir_name != None:
+        files_path = s3Dir_name
+
     # Upload de arquivos para o S3
     for file in files:
         file_path = os.path.join(files_path, file)
-        s3_file_path = f"clients/{client_id}/robot/{robot_id}/{file}"
+        s3_file_path = f"clients/{client_id}/robot/{robot_id}/{files_path}/{file}"
 
         try:
             s3.upload_file(file_path, bucket_name, s3_file_path)
@@ -258,7 +251,7 @@ def sendFilesToS3(
     print("Envio de arquivos concluído.")
 
 def sendFileToS3(
-    file_path: str, client_id: str | int, robot_id: str | int
+    file_path: str, client_id: str | int, robot_id: str | int, mes: int, ano: int, nome_empresa: str = "ERROR"
 ) -> None:
     s3 = boto3.client("s3")
     bucket_name = "repositorio-mia"
