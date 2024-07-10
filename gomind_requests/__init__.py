@@ -79,9 +79,9 @@ def getToken(url, email, passwd):
     return response
 
 
-def getCustomersByRobot(url, token, id):
+def getCustomersByRobot(url, token, robot_id, customer_id):
     header      = {"Authorization": f"Bearer {token}"}
-    response    = requests.get(f'{url}/api/customers_by_robot?robot_id={id}&all_data=true', headers=header) 
+    response    = requests.get(f'{url}/api/customers_by_robot?robot_id={robot_id}&customer_id={customer_id}&all_data=true', headers=header) 
 
     try:
         response = response.json()['customers_by_robot']
