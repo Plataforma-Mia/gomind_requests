@@ -238,7 +238,7 @@ def sendFilesToS3(
     # Upload de arquivos para o S3
     for file in files:
         file_path = os.path.join(files_path, file)
-        s3_file_path = f"clients/{client_id}/robot/{robot_id}/{files_path}/{file}"
+        s3_file_path = f"clients/{client_id}/robot/{robot_id}/{nome_empresa}/{mes}_{ano}/{file_path}"
 
         try:
             s3.upload_file(file_path, bucket_name, s3_file_path)
@@ -268,6 +268,8 @@ def sendFileToS3(
 
     # Upload de arquivo para o S3
     s3_file_path = f"clients/{client_id}/robot/{robot_id}/output/{file_path}"
+    s3_file_path = f"clients/{client_id}/robot/{robot_id}/{nome_empresa}/{mes}_{ano}/{file_path}"
+
 
     try:
         s3.upload_file(file_path, bucket_name, s3_file_path)
