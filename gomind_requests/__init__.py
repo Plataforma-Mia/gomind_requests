@@ -91,9 +91,9 @@ def getCustomersByRobot(url, token, robot_id, customer_id):
     return response
 
 
-def dataConfig(url, token, robot_id) -> CustomersData:
+def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
     dataList    = []
-    data        = getCustomersByRobot(url, token, robot_id)
+    data        = getCustomersByRobot(url, token, robot_id, customer_id)
 
     if isinstance(data, str):
         return False
