@@ -270,11 +270,13 @@ def sendFileToS3(
         print(f"Não há arquivos para enviar no diretório {file_path}.")
         return
 
+    file_name = os.path.basename(file_path)
+
     # Upload de arquivo para o S3
     if mes == None or ano == None:
-        s3_file_path = f"clients/{client_id}/robot/{robot_id}/{file_path}"
+        s3_file_path = f"clients/{client_id}/robot/{robot_id}/{file_name}"
     else:
-        s3_file_path = f"clients/{client_id}/robot/{robot_id}/{nome_empresa}/{mes}_{ano}/{file_path}"
+        s3_file_path = f"clients/{client_id}/robot/{robot_id}/{nome_empresa}/{mes}_{ano}/{file_name}"
 
     try:
         s3.upload_file(file_path, bucket_name, s3_file_path)
