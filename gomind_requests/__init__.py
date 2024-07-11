@@ -234,8 +234,10 @@ def sendFilesToS3(
     
     # Upload de arquivos para o S3
     for file in files:
-        file_path = os.path.join(files_path, file)
-        if mes == None or ano == None:
+        file_path = os.path.join(files_path, file)       
+        if mes == None or ano == None and s3Dir_name != None:
+            s3_file_path = f"clients/{client_id}/robot/{robot_id}/{s3Dir_name}/{file}"
+        elif mes == None or ano == None:
             s3_file_path = f"clients/{client_id}/robot/{robot_id}/{file}"
         elif s3Dir_name != None:
             s3_file_path = f"clients/{client_id}/robot/{robot_id}/{nome_empresa}/{mes}_{ano}/{s3Dir_name}/{file}"
