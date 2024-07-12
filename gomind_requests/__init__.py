@@ -84,7 +84,7 @@ def getCustomersByRobot(url, token, robot_id, customer_id):
     response    = requests.get(f'{url}/api/customers_by_robot?robot_id={robot_id}&customer_id={customer_id}&all_data=true', headers=header) 
 
     try:
-        response = response.json()['customers_by_robot']
+        response = response.json()['children_customers']
     except:
         response = False
 
@@ -98,7 +98,13 @@ def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
     if isinstance(data, str):
         return False
     try:
-        config      = getOfficeData(data[0]['office_configuration'])
+        config     = getOfficeData(data[0]['office_configuration'])
+        cert       = []
+        for object in data:
+            cert.append(object['office_configuration']['certificate'])
+
+        config.certificate = remove_duplicates(cert)
+
         toRemove    = {'office_configuration','updated_at', 'created_at'}
 
         for object in data:
@@ -108,6 +114,19 @@ def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
         return getTotalData(dataList, config)
     except:
         return False
+    
+def remove_duplicates(list_of_dicts):
+    seen = set()
+    unique_dicts = []
+    
+    for d in list_of_dicts:
+        if d is not None:
+            items_tuple = tuple(d.items())
+            if items_tuple not in seen:
+                seen.add(items_tuple)
+                unique_dicts.append(d)
+    
+    return unique_dicts
 
 
 def sendCustomerEmployee(url, token, robot_id, customer_id, data):#testar
