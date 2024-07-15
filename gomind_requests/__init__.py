@@ -3,7 +3,6 @@ from dataclasses import dataclass
 import boto3
 import os
 
-
 @dataclass
 class CustomersData:
     #informações do cliente
@@ -70,7 +69,7 @@ def getToken(url, email, passwd):
         'password': str(passwd)
     }
     response = requests.post(f'{url}/api/login', json=payload)
-    
+
     try:
         response = response.json()['token']
     except:
@@ -82,10 +81,11 @@ def getToken(url, email, passwd):
 def getCustomersByRobot(url, token, robot_id, customer_id):
     header      = {"Authorization": f"Bearer {token}"}
     response    = requests.get(f'{url}/api/customers_by_robot?robot_id={robot_id}&customer_id={customer_id}&all_data=true', headers=header) 
-
+    print('Passou no requests.get para customers_by_robot')
     try:
         response = response.json()['children_customers']
-    except:
+    except Exception as e:
+        print(f'erro em getCustomersByRobot(): {e}')
         response = False
 
     return response
@@ -96,15 +96,21 @@ def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
     data        = getCustomersByRobot(url, token, robot_id, customer_id)
 
     if isinstance(data, str):
+        print(data)
+        print("Erro ao buscar dados do cliente")
         return False
     try:
         config     = getOfficeData(data[0]['office_configuration'])
         cert       = []
+
+        print('definiu config e abriu lista para cert')
+
         for object in data:
             cert.append(object['office_configuration']['certificate'])
+        
+        print(f'criou lista de certificados: {cert}')
 
         config.certificate = remove_duplicates(cert)
-
         toRemove    = {'office_configuration','updated_at', 'created_at'}
 
         for object in data:
@@ -112,7 +118,8 @@ def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
             dataList.append(getCustomerData(clientInfo))
 
         return getTotalData(dataList, config)
-    except:
+    except Exception as e:
+        print(f'erro em dataConfig(): {e}')
         return False
     
 def remove_duplicates(list_of_dicts):
