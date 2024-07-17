@@ -341,13 +341,3 @@ def getFileFromS3(
         return
 
     print("Download de arquivos concluído.")
-
-
-file_path       = os.getcwd()
-s3_file_path    = 'DOMINI SMART SOLUTIONS-Declaração de Ausência-05.2024.pdf'
-client_id       = 30
-robot_id        = 1
-mes             = '05'
-ano             = '2024'
-nome_empresa    = 'DOMINI SMART SOLUTIONS'
-getFileFromS3(file_path, s3_file_path, client_id, robot_id, mes, ano, nome_empresa)
