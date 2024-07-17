@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import boto3
 import os
 
+
 @dataclass
 class CustomersData:
     #informações do cliente
@@ -314,3 +315,39 @@ def sendFileToS3(
         print(f"Erro ao enviar {file_path} para {s3_file_path}: {e}")
 
     print("Envio de arquivos concluído.")
+
+def getFileFromS3(
+    local_file_path: str, s3_file_path: str, client_id: str | int, robot_id: str | int, mes: int = None, ano: int = None, nome_empresa: str = None
+) -> None:
+    
+    s3              = boto3.client("s3")
+    bucket_name     = "repositorio-mia"
+    file_name       = os.path.basename(s3_file_path)
+    local_file_path = os.path.join(local_file_path, file_name)
+
+    # Upload de arquivo para o S3
+    if mes == None or ano == None:
+        s3_file_path_new = f"clients/{client_id}/robot/{robot_id}/{file_name}"
+    else:
+        s3_file_path_new = f"clients/{client_id}/robot/{robot_id}/{nome_empresa}/{mes}_{ano}/{file_name}"
+
+    try:
+        s3.download_file(bucket_name, s3_file_path_new, local_file_path)
+        print(
+            f"Arquivo {s3_file_path_new} enviado para {local_file_path}."
+        )
+    except Exception as e:
+        print(f"Erro ao baixar {s3_file_path_new} para {local_file_path}: {e}")
+        return
+
+    print("Download de arquivos concluído.")
+
+
+file_path       = os.getcwd()
+s3_file_path    = 'DOMINI SMART SOLUTIONS-Declaração de Ausência-05.2024.pdf'
+client_id       = 30
+robot_id        = 1
+mes             = '05'
+ano             = '2024'
+nome_empresa    = 'DOMINI SMART SOLUTIONS'
+getFileFromS3(file_path, s3_file_path, client_id, robot_id, mes, ano, nome_empresa)
