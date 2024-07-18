@@ -3,6 +3,21 @@ from dataclasses import dataclass
 import boto3
 import os
 
+class Logger:
+    def log(self, message, status="info"):
+        print("{} - [{}]".format(message, status))
+
+_LOGGER = Logger()
+
+class Automation:
+    """Utilizar essa classe para setar as variáveis do automation"""
+    logger = _LOGGER
+
+    def __init__(self, logger: any = _LOGGER) -> None:
+        Automation.logger = logger
+
+
+logger = Automation.logger
 
 @dataclass
 class CustomersData:
@@ -81,7 +96,7 @@ def getToken(url, email, passwd):
 def getCustomersByRobot(url, token, robot_id, customer_id):
     header      = {"Authorization": f"Bearer {token}"}
     response    = requests.get(f'{url}/api/customers_by_robot?robot_id={robot_id}&customer_id={customer_id}&all_data=true', headers=header) 
-    print('Passou no requests.get para customers_by_robot')
+    logger.log('Passou no requests.get para customers_by_robot')
     try:
         response = response.json()['children_customers']
     except Exception as e:
@@ -94,16 +109,18 @@ def getCustomersByRobot(url, token, robot_id, customer_id):
 def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
     dataList    = []
     data        = getCustomersByRobot(url, token, robot_id, customer_id)
-
+    logger.log('definiu data: {}'.format(data))
     if isinstance(data, str):
         print(data)
         print("Erro ao buscar dados do cliente")
         return False
     try:
+        logger.log('Entrou no try/exc do dataConfig()')
+
         config     = getOfficeData(data[0]['office_configuration'])
         cert       = []
 
-        print('definiu config e abriu lista para cert')
+        logger.log(f'definiu config: {config} e abriu lista para cert')
 
         for object in data:
             try:
@@ -113,7 +130,7 @@ def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
             except:
                 pass
         
-        print(f'criou lista de certificados: {cert}')
+        logger.log(f'criou lista de certificados: {cert}')
 
         config.certificate = remove_duplicates(cert)
         toRemove    = {'office_configuration','updated_at', 'created_at', 'inner_sheet'}
