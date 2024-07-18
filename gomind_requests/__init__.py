@@ -106,9 +106,12 @@ def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
         print('definiu config e abriu lista para cert')
 
         for object in data:
-            aux  = object['office_configuration']['certificate']
-            aux['certificate_name']  = object['office_configuration']['office_description']
-            cert.append(aux)
+            try:
+                aux  = object['office_configuration']['certificate']
+                aux['certificate_name']  = object['office_configuration']['office_description']
+                cert.append(aux)
+            except:
+                pass
         
         print(f'criou lista de certificados: {cert}')
 
