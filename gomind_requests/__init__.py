@@ -96,11 +96,13 @@ def getToken(url, email, passwd):
 def getCustomersByRobot(url, token, robot_id, customer_id):
     header      = {"Authorization": f"Bearer {token}"}
     response    = requests.get(f'{url}/api/customers_by_robot?robot_id={robot_id}&customer_id={customer_id}&all_data=true', headers=header) 
+    logger.log(f'{url}/api/customers_by_robot?robot_id={robot_id}&customer_id={customer_id}&all_data=true')
     logger.log('Passou no requests.get para customers_by_robot')
     try:
         response = response.json()['children_customers']
+        logger.log(f'response no try/excpt do getcustomersByRobot: {response}')
     except Exception as e:
-        print(f'erro em getCustomersByRobot(): {e}')
+        logger.log(f'erro em getCustomersByRobot(): {e}')
         response = False
 
     return response
