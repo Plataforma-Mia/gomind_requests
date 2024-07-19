@@ -2,6 +2,7 @@ import requests
 from dataclasses import dataclass
 import boto3
 import os
+from pathlib import Path
 
 class Logger:
     def log(self, message, status="info"):
@@ -363,3 +364,39 @@ def getFileFromS3(
         return
 
     print("Download de arquivos concluído.")
+
+
+def list_s3_objects(bucket: str, prefix: str, filter_pfx: bool = False) -> list:
+    """
+    Lista objetos em um bucket S3 dado um prefixo.
+    Se filter_pfx for True, retorna apenas arquivos com a extensão .pfx.
+    """
+    try:
+        s3 = boto3.client("s3")
+        response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        objects = response.get("Contents", [])
+        
+        if filter_pfx:
+            objects = [obj for obj in objects if obj["Key"].endswith('.pfx')]
+        
+        return [obj["Key"] for obj in objects if obj["Key"] != prefix]
+    except Exception as e:
+        print(f"Erro ao listar objetos do S3: {e}")
+        return []
+
+
+def download_s3_objects(bucket: str, objects: list, local_dir: Path):
+    """
+    Baixa objetos do S3 para um diretório local.
+    """
+    for obj in objects:
+        file_name = Path(obj).name
+        file_path = local_dir / file_name
+
+        print(f"Baixando {obj} para {file_path}")
+
+        try:
+            s3 = boto3.client("s3")
+            s3.download_file(bucket, obj, str(file_path))
+        except Exception as e:
+            print(f"Erro ao baixar {obj}: {e}")
