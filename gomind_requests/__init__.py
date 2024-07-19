@@ -36,6 +36,10 @@ class CustomersData:
     state_registration:         str | None 
     type_tax:                   str | None 
     total_partners:             str | None
+    inner_sheet:                str | bool | None
+    payment_date:               str | None
+
+
 @dataclass
 class OfficeConfig:
     #configurações do escritório
@@ -136,7 +140,7 @@ def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
         logger.log(f'criou lista de certificados: {cert}')
 
         config.certificate = remove_duplicates(cert)
-        toRemove    = {'office_configuration','updated_at', 'created_at', 'inner_sheet'}
+        toRemove    = {'office_configuration','updated_at', 'created_at'}
 
         for object in data:
             clientInfo  = {k: v for k, v in object.items() if k not in toRemove}
