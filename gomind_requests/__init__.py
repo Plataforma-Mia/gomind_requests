@@ -308,6 +308,7 @@ def sendFilesToS3(
             print(f"Erro ao enviar {file_path} para {s3_file_path}: {e}")
 
     print("Envio de arquivos concluído.")
+    return s3_file_path
 
 def sendFileToS3(
     file_path: str, client_id: str | int, robot_id: str | int, mes: int = None, ano: int = None, nome_empresa: str = None
