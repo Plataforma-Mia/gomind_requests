@@ -405,3 +405,15 @@ def download_s3_objects(bucket: str, objects: list, local_dir: Path):
             s3.download_file(bucket, obj, str(file_path))
         except Exception as e:
             print(f"Erro ao baixar {obj}: {e}")
+
+
+def get_instance_id():
+    #Obtém o ID da instância EC2
+    response = requests.get("http://169.254.169.254/latest/meta-data/instance-id")
+    return response.text
+
+def terminate_instance():
+    #Terminate the EC2 instance
+    instance_id = get_instance_id()
+    ec2_client  = boto3.client("ec2", region_name="sa-east-1")
+    ec2_client.terminate_instances(InstanceIds=[instance_id])
