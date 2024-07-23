@@ -38,7 +38,8 @@ class CustomersData:
     total_partners:             str | None
     inner_sheet:                str | bool | None
     payment_date:               str | None
-
+    city_hall_login:            str | None
+    city_hall_password:         str | None  
 
 @dataclass
 class OfficeConfig:
@@ -417,3 +418,4 @@ def terminate_instance():
     instance_id = get_instance_id()
     ec2_client  = boto3.client("ec2", region_name="sa-east-1")
     ec2_client.terminate_instances(InstanceIds=[instance_id])
+
