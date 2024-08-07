@@ -261,12 +261,21 @@ def sendStap(url, token, robot_id, customer_id, data:dict):
     return response
 
 
-def getStep(url, token, robot_id, customer_id):
-    data = {
-        'step': 1,
-        'status': 'success'
-    }
-    return data
+def getStep(url: str, token: str, robot_id: int|str, customer_id: int|str, erp_code: int|str|None = None) -> str | bool:
+
+    header      = {"Authorization": f"Bearer {token}"}
+
+    if erp_code != None:
+        response    = requests.get(f'{url}/api/robot_step_log?robot_id={robot_id}&customer_id={customer_id}&erp_code={erp_code}', headers=header) 
+    else:
+        response    = requests.get(f'{url}/api/robot_step_log?robot_id={robot_id}&customer_id={customer_id}', headers=header)
+   
+    try:
+        response = str(response.json()['robot_log']['data'][0]['robot_log']['step'])
+    except:
+        response = False
+
+    return response
 
 
 def sendFilesToS3(
