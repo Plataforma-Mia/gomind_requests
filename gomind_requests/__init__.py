@@ -443,7 +443,7 @@ def s3_dowloadAll(client_id:int|str, robot_id:int|str, local_directory:str, comp
         local_directory = os.path.join(local_directory,'s3_download')
 
         bucket_name       = 'repositorio-mia'
-        s3_prefix         = f'clients/{client_id}/robot/{robot_id}'
+        s3_prefix         = f'clients/{client_id}/robot/{robot_id}/'
 
         # Cria a sessão e o cliente S3
         s3 = boto3.client('s3')
