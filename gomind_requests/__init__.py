@@ -284,7 +284,10 @@ def sendFilesToS3(
     files_path: str, client_id: str | int, robot_id: str | int, mes: int = None, ano: int = None, nome_empresa: str = None, s3Dir_name: str=None
 ) -> str|None:
     s3 = boto3.client("s3")
-    bucket_name = "repositorio-mia"
+    bucket_name = os.getenv('BUCKET_NAME')
+
+    if not bucket_name:
+        raise ValueError("Variável de ambiente BUCKET_NAME não definida.")
 
     # Verificar se o diretório existe
     if not os.path.exists(files_path):
@@ -326,7 +329,10 @@ def sendFileToS3(
     file_path: str, client_id: str | int, robot_id: str | int, mes: int = None, ano: int = None, nome_empresa: str = None
 ) -> str|None:
     s3 = boto3.client("s3")
-    bucket_name = "repositorio-mia"
+    bucket_name = os.getenv('BUCKET_NAME')
+
+    if not bucket_name:
+        raise ValueError("Variável de ambiente BUCKET_NAME não definida.")
 
     # Verificar se o diretório existe
     if not os.path.exists(file_path):
@@ -362,9 +368,13 @@ def getFileFromS3(
 ) -> None:
     
     s3              = boto3.client("s3")
-    bucket_name     = "repositorio-mia"
     file_name       = os.path.basename(s3_file_path)
     local_file_path = os.path.join(local_file_path, file_name)
+
+    bucket_name = os.getenv('BUCKET_NAME')
+
+    if not bucket_name:
+        raise ValueError("Variável de ambiente BUCKET_NAME não definida.")
 
     # Upload de arquivo para o S3
     if mes == None or ano == None:
@@ -443,8 +453,12 @@ def s3_dowloadAll(client_id:int|str, robot_id:int|str, local_directory:str, comp
 
         local_directory = os.path.join(local_directory,'s3_download')
 
-        bucket_name       = 'repositorio-mia'
+        # bucket_name       = 'repositorio-mia'
         s3_prefix         = f'clients/{client_id}/robot/{robot_id}/'
+        bucket_name = os.getenv('BUCKET_NAME')
+
+        if not bucket_name:
+            raise ValueError("Variável de ambiente BUCKET_NAME não definida.")
 
         # Cria a sessão e o cliente S3
         s3 = boto3.client('s3')
