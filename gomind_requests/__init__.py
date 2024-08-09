@@ -430,21 +430,6 @@ def terminate_instance():
     ec2_client  = boto3.client("ec2", region_name="sa-east-1")
     ec2_client.terminate_instances(InstanceIds=[instance_id])
 
-# def prepareToSend(bucket: str, prefix: list, filter_pfx: bool = False):
-#     try:
-#         s3          = boto3.client("s3")
-#         response    = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
-#         objects     = response.get("Contents", [])
-
-#         print(response)
-
-#         if filter_pfx:
-#             objects = [obj for obj in objects if obj["Key"].endswith('.pfx')]
-        
-#         return [obj["Key"] for obj in objects if obj["Key"] != prefix]
-#     except Exception as e:
-#         print(f"Erro ao listar objetos do S3: {e}")
-#         return []
 
 def download_file(s3, bucket, s3_key, local_path):
 
@@ -509,3 +494,16 @@ def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, compete
         return zip
     except:
         return False
+
+
+
+
+MIA_URL              = "http://54.198.91.9"
+MIA_LOGIN            = "robo@gomind.com.br"
+MIA_PASSWORD         = "password"
+CAMINHO_DO_PROJETO   = (os.path.abspath(__file__)).replace(f"{os.sep}{os.path.basename(__file__)}", "")
+
+token = getToken(MIA_URL, MIA_LOGIN, MIA_PASSWORD)
+data  = get_s3_zip(4,9, os.path.join(CAMINHO_DO_PROJETO, "teste"))
+
+print(data)
