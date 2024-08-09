@@ -461,7 +461,8 @@ def s3_dowloadAll(client_id:int|str, robot_id:int|str, local_directory:str, comp
                     relative_path = os.path.relpath(s3_key, s3_prefix)
                     local_file_path = os.path.join(local_directory, relative_path)
                     
-                    to_ignore.append(f'logs{os.sep}' )
+                    default_ignore    = [f'logs{os.sep}', 'arquivos_baixados.zip']
+                    to_ignore         = to_ignore + default_ignore
 
                     if any(ignore_str in relative_path for ignore_str in to_ignore):
                         continue
