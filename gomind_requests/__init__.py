@@ -282,7 +282,7 @@ def getStep(url: str, token: str, robot_id: int|str, customer_id: int|str, erp_c
 
 def sendFilesToS3(
     files_path: str, client_id: str | int, robot_id: str | int, mes: int = None, ano: int = None, nome_empresa: str = None, s3Dir_name: str=None
-) -> None:
+) -> str|None:
     s3 = boto3.client("s3")
     bucket_name = "repositorio-mia"
 
@@ -324,7 +324,7 @@ def sendFilesToS3(
 
 def sendFileToS3(
     file_path: str, client_id: str | int, robot_id: str | int, mes: int = None, ano: int = None, nome_empresa: str = None
-) -> None:
+) -> str|None:
     s3 = boto3.client("s3")
     bucket_name = "repositorio-mia"
 
@@ -355,6 +355,7 @@ def sendFileToS3(
         print(f"Erro ao enviar {file_path} para {s3_file_path}: {e}")
 
     print("Envio de arquivos concluído.")
+    return s3_file_path
 
 def getFileFromS3(
     local_file_path: str, s3_file_path: str, client_id: str | int, robot_id: str | int, mes: int = None, ano: int = None, nome_empresa: str = None
