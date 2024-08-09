@@ -494,16 +494,3 @@ def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, compete
         return zip
     except:
         return False
-
-
-
-
-MIA_URL              = "http://54.198.91.9"
-MIA_LOGIN            = "robo@gomind.com.br"
-MIA_PASSWORD         = "password"
-CAMINHO_DO_PROJETO   = (os.path.abspath(__file__)).replace(f"{os.sep}{os.path.basename(__file__)}", "")
-
-token = getToken(MIA_URL, MIA_LOGIN, MIA_PASSWORD)
-data  = get_s3_zip(4,9, os.path.join(CAMINHO_DO_PROJETO, "teste"))
-
-print(data)
