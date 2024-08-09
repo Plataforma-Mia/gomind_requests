@@ -3,6 +3,8 @@ from dataclasses import dataclass
 import boto3
 import os
 from pathlib import Path
+import zipfile
+# import shutil
 
 class Logger:
     def log(self, message, status="info"):
@@ -428,3 +430,82 @@ def terminate_instance():
     ec2_client  = boto3.client("ec2", region_name="sa-east-1")
     ec2_client.terminate_instances(InstanceIds=[instance_id])
 
+# def prepareToSend(bucket: str, prefix: list, filter_pfx: bool = False):
+#     try:
+#         s3          = boto3.client("s3")
+#         response    = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+#         objects     = response.get("Contents", [])
+
+#         print(response)
+
+#         if filter_pfx:
+#             objects = [obj for obj in objects if obj["Key"].endswith('.pfx')]
+        
+#         return [obj["Key"] for obj in objects if obj["Key"] != prefix]
+#     except Exception as e:
+#         print(f"Erro ao listar objetos do S3: {e}")
+#         return []
+
+def download_file(s3, bucket, s3_key, local_path):
+
+    if not os.path.exists(os.path.dirname(local_path)):
+        os.makedirs(os.path.dirname(local_path))
+    s3.download_file(bucket, s3_key, local_path)
+
+def s3_dowloadAll(client_id:int|str, robot_id:int|str, local_directory:str, competencia:str='', to_ignore:list = []) -> str|bool:
+    try:
+
+        local_directory = os.path.join(local_directory,'s3_download')
+
+        bucket_name       = 'repositorio-mia'
+        s3_prefix         = f'clients/{client_id}/robot/{robot_id}'
+
+        # Cria a sessão e o cliente S3
+        s3 = boto3.client('s3')
+
+        # Lista todos os objetos no bucket com o prefixo especificado
+        paginator   = s3.get_paginator('list_objects_v2')
+        pages       = paginator.paginate(Bucket=bucket_name, Prefix=s3_prefix)
+
+        # Itera sobre os arquivos e faz o download recursivo
+        for page in pages:
+            if 'Contents' in page:
+                for obj in page['Contents']:
+
+                    s3_key = obj['Key']
+                    relative_path = os.path.relpath(s3_key, s3_prefix)
+                    local_file_path = os.path.join(local_directory, relative_path)
+                    
+                    to_ignore.append(f'logs{os.sep}' )
+
+                    if any(ignore_str in relative_path for ignore_str in to_ignore):
+                        continue
+                    
+                    if  competencia not in relative_path:
+                        continue
+
+                    download_file(s3, bucket_name, s3_key, local_file_path)
+                    logger.log(f'Arquivo {s3_key} baixado para {local_file_path}')
+
+        return local_directory
+    except:
+        return False
+
+def zip_directory(folder_path, output_filename):
+    with zipfile.ZipFile(output_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                zipf.write(file_path, os.path.relpath(file_path, folder_path))
+
+def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, competencia:str = '', to_ignore:list = []) -> str|bool:
+    try:
+        dir = s3_dowloadAll(client_id, robot_id, local_directory, competencia, to_ignore)
+        zip = os.path.join(local_directory, "arquivos_baixados.zip")
+
+        zip_directory(dir, zip)
+        # shutil.rmtree(dir)
+
+        return zip
+    except:
+        return False
