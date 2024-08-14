@@ -146,7 +146,7 @@ def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
         logger.log(f'criou lista de certificados: {cert}')
 
         config.certificate = remove_duplicates(cert)
-        toRemove    = {'office_configuration','updated_at', 'created_at'}
+        toRemove    = {'office_configuration','updated_at', 'created_at', 'robot'}
 
         for object in data:
             clientInfo  = {k: v for k, v in object.items() if k not in toRemove}
