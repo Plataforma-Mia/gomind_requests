@@ -42,6 +42,9 @@ class CustomersData:
     payment_date:               str | None
     city_hall_login:            str | None
     city_hall_password:         str | None  
+    employer_web_user:          str | None  
+    employer_web_password:      str | None  
+
 
 @dataclass
 class OfficeConfig:
@@ -56,14 +59,14 @@ class OfficeConfig:
     senha_nibo:                 str | None
     usuario_dominio:            str | None
     senha_dominio:              str | None
-    diretorio:                  str | None
+    #diretorio:                  str | None
     destinatario_email:         str | None
     email_cc:                   str | None
-    unidade_dominio:            str | None
-    employer_web_user:          str | None
-    employer_web_password:      str | None
+    #unidade_dominio:            str | None
+    #employer_web_user:          str | None
+    #employer_web_password:      str | None
     download_source:            str | None
-    temp_path:                  str | None
+    #temp_path:                  str | None
     created_at:                 str | None
     updated_at:                 str | None
     certificate:                list | None
@@ -510,3 +513,4 @@ def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, compete
         return zip
     except:
         return False
+
