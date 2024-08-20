@@ -42,6 +42,8 @@ class CustomersData:
     payment_date:               str | None
     city_hall_login:            str | None
     city_hall_password:         str | None  
+    city_hall_login_2:          str | None
+    city_hall_password_2:       str | None  
     employer_web_user:          str | None  
     employer_web_password:      str | None  
 
@@ -513,4 +515,3 @@ def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, compete
         return zip
     except:
         return False
-
