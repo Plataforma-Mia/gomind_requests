@@ -331,7 +331,7 @@ def sendFilesToS3(
     return s3_file_path
 
 def sendFileToS3(
-    file_path: str, client_id: str | int, robot_id: str | int, mes: int = None, ano: int = None, nome_empresa: str = None
+    file_path: str, client_id: str | int, robot_id: str | int, mes: int = None, ano: int = None, nome_empresa: str = None, s3Dir_name: str=None
 ) -> str|None:
     s3 = boto3.client("s3")
     bucket_name = os.getenv('BUCKET_NAME')
@@ -352,8 +352,12 @@ def sendFileToS3(
     file_name = os.path.basename(file_path)
 
     # Upload de arquivo para o S3
-    if mes == None or ano == None:
+    if mes == None or ano == None and s3Dir_name != None:
+        s3_file_path = f"clients/{client_id}/robot/{robot_id}/{s3Dir_name}/{file_name}"
+    elif mes == None or ano == None:
         s3_file_path = f"clients/{client_id}/robot/{robot_id}/{file_name}"
+    elif s3Dir_name != None:
+        s3_file_path = f"clients/{client_id}/robot/{robot_id}/{nome_empresa}/{mes}_{ano}/{s3Dir_name}/{file_name}"
     else:
         s3_file_path = f"clients/{client_id}/robot/{robot_id}/{nome_empresa}/{mes}_{ano}/{file_name}"
 
