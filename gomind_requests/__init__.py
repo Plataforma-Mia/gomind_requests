@@ -175,8 +175,10 @@ def remove_duplicates(list_of_dicts):
     
     return unique_dicts
 
-def removeNonAlphanumeric(string:str) -> str:
-    return re.sub(r'[^a-zA-Z0-9]', '', string)
+def removeNonAlphanumeric(string:str | None) -> str | None:
+    if string == None:
+        return string
+    return re.sub(r'\W+', '', string)
 
 def sendCustomerEmployee(url, token, robot_id, customer_id, data):#testar
     data_keys = [
