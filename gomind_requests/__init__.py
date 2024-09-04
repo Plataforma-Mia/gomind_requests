@@ -4,6 +4,7 @@ import boto3
 import os
 from pathlib import Path
 import zipfile
+import re
 # import shutil
 
 class Logger:
@@ -152,9 +153,11 @@ def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
 
         for object in data:
             clientInfo  = {k: v for k, v in object.items() if k not in toRemove}
+            clientInfo['municipal_registration'] = removeNonAlphanumeric(clientInfo['municipal_registration'])
             dataList.append(getCustomerData(clientInfo))
 
         return getTotalData(dataList, config)
+    
     except Exception as e:
         print(f'erro em dataConfig(): {e}')
         return False
@@ -172,6 +175,8 @@ def remove_duplicates(list_of_dicts):
     
     return unique_dicts
 
+def removeNonAlphanumeric(string:str) -> str:
+    return re.sub(r'[^a-zA-Z0-9]', '', string)
 
 def sendCustomerEmployee(url, token, robot_id, customer_id, data):#testar
     data_keys = [
@@ -517,5 +522,6 @@ def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, compete
         # shutil.rmtree(dir)
 
         return zip
-    except:
+    except Exception as e:
+        print(e)
         return False
