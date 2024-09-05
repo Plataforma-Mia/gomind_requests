@@ -366,7 +366,7 @@ def sendFileToS3(
     file_name = os.path.basename(file_path)
 
     # Upload de arquivo para o S3
-    if mes == None or ano == None and s3Dir_name != None:
+    if (mes == None or ano == None) and s3Dir_name != None:
         s3_file_path = f"clients/{client_id}/robot/{robot_id}/{s3Dir_name}/{file_name}"
     elif mes == None or ano == None:
         s3_file_path = f"clients/{client_id}/robot/{robot_id}/{file_name}"
