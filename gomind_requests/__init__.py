@@ -154,6 +154,7 @@ def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
         for object in data:
             clientInfo  = {k: v for k, v in object.items() if k not in toRemove}
             clientInfo['municipal_registration'] = removeNonAlphanumeric(clientInfo['municipal_registration'])
+            emptyStringToNone(clientInfo)
             dataList.append(getCustomerData(clientInfo))
 
         return getTotalData(dataList, config)
@@ -176,10 +177,16 @@ def remove_duplicates(list_of_dicts):
     return unique_dicts
 
 def removeNonAlphanumeric(string:str | None) -> str | None:
-    if string == None:
-        return string
+    if not string:
+        return None
     return re.sub(r'\W+', '', string)
 
+def emptyStringToNone(dict:dict) -> dict:
+    for chave, string in dict.items():
+        if string == '':
+            dict[chave] = None
+    return dict
+        
 def sendCustomerEmployee(url, token, robot_id, customer_id, data):#testar
     data_keys = [
         "nome",
