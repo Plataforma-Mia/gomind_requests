@@ -5,7 +5,13 @@ import os
 from pathlib import Path
 import zipfile
 import re
-# import shutil
+import gomind_cli as cli
+from datetime import datetime
+import sys
+from dotenv import load_dotenv
+CLI_ARGUMENTS = cli.get_sys_args_as_dict()
+
+start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 class Logger:
     def log(self, message, status="info"):
@@ -22,6 +28,11 @@ class Automation:
 
 
 logger = Automation.logger
+
+load_dotenv()
+user        = os.getenv('MIA_LOGIN')
+passwd      = os.getenv('MIA_PASSWORD')
+url         = os.getenv('MIA_URL')
 
 @dataclass
 class CustomersData:
@@ -120,6 +131,18 @@ def getCustomersByRobot(url, token, robot_id, customer_id):
         response = False
 
     return response
+
+def getRobotNameById(url, token, robot_id, customer_id):
+    header      = {"Authorization": f"Bearer {token}"}
+    response    = requests.get(f'{url}/api/robots?customer_id={customer_id}6&all_data=true', headers=header)
+    
+    try:
+        data = response.json().get('robots', {}).get('data', [])
+        for robot in data:
+            if robot.get('id') == robot_id:
+                return robot.get('description')
+    except:
+        return False
 
 
 def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
@@ -534,3 +557,46 @@ def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, compete
     except Exception as e:
         print(e)
         return False
+
+
+def stepMia(action:str, step:str, path_log:str, erp_code:int|str='', archive_name:str='', path_url:str='', end_time: bool=False):
+    '''Função para enviar o step para a MIA\n
+    :param action: ação que está sendo realizada
+    :param step: passo do processo
+    :param path_log: caminho do log na S3
+    :param erp_code: código do ERP
+    :param archive_name: nome do arquivo
+    :param path_url: caminho do arquivo na S3
+    :param end_time: se o processo terminou
+    '''
+    
+    token = getToken(url, user, passwd)
+    
+    MES_MIA = CLI_ARGUMENTS.get('competenceMonth') or ""
+    ANO_MIA = CLI_ARGUMENTS.get('competenceYear') or ""
+    USER_ID = CLI_ARGUMENTS.get('userId')
+    
+    if len(sys.argv) > 1:
+        robot_id    = sys.argv[1]#pegar via argumento
+        customer_id = sys.argv[2]#pegar via argumento
+    else:
+        logger.log("Não foi possível carregar os argumentos")
+        raise Exception('Não foi possível carregar os argumentos na função stepMia()')
+    
+    end_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S') if end_time else ""
+        
+    sendStap(url, token, robot_id, customer_id, {
+        'action': action,
+        'description': getRobotNameById(url, token, robot_id, customer_id),
+        'step': step,
+        'path': logger.get_log_filename(),
+        'path_url': path_log,
+        "erp_code": erp_code,
+        "path_customer": archive_name,
+        "path_url_customer": path_url,
+        "competence_month": MES_MIA, 
+        "competence_year": ANO_MIA,
+        "user_id": USER_ID,
+        "start_date": start_time,
+        "end_date": end_date
+    })
