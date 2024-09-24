@@ -559,10 +559,11 @@ def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, compete
         return False
 
 
-def stepMia(action:str, step:str, path_log:str, erp_code:int|str='', archive_name:str='', path_url:str='', end_time: bool=False):
+def stepMia(action:str, step:str, log_name:str, path_log:str, erp_code:int|str='', archive_name:str='', path_url:str='', end_time: bool=False):
     '''Função para enviar o step para a MIA\n
     :param action: ação que está sendo realizada
     :param step: passo do processo
+    :param log_name: nome do arquivo de log. Utilizar logger.get_log_filename()
     :param path_log: caminho do log na S3
     :param erp_code: código do ERP
     :param archive_name: nome do arquivo
@@ -589,8 +590,8 @@ def stepMia(action:str, step:str, path_log:str, erp_code:int|str='', archive_nam
         'action': action,
         'description': getRobotNameById(url, token, robot_id, customer_id),
         'step': step,
-        'path': logger.get_log_filename(),
-        'path_url': path_log,
+        'path_log': log_name,
+        'path_url_log': path_log,
         "erp_code": erp_code,
         "path_customer": archive_name,
         "path_url_customer": path_url,
