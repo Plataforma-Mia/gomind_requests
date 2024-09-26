@@ -9,6 +9,8 @@ import gomind_cli as cli
 from datetime import datetime
 import sys
 from dotenv import load_dotenv
+import shutil
+import gomind_sqlite_to_excel as sql2excel
 CLI_ARGUMENTS = cli.get_sys_args_as_dict()
 
 start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -17,17 +19,7 @@ class Logger:
     def log(self, message, status="info"):
         print("{} - [{}]".format(message, status))
 
-_LOGGER = Logger()
-
-class Automation:
-    """Utilizar essa classe para setar as variáveis do automation"""
-    logger = _LOGGER
-
-    def __init__(self, logger: any = _LOGGER) -> None:
-        Automation.logger = logger
-
-
-logger = Automation.logger
+logger = Logger()
 
 load_dotenv()
 user        = os.getenv('MIA_LOGIN')
@@ -549,6 +541,10 @@ def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, compete
     try:
         dir = s3_dowloadAll(client_id, robot_id, local_directory, competencia, to_ignore)
         zip = os.path.join(local_directory, "arquivos_baixados.zip")
+        
+        # Levando em consideração que o local_directory é sempre o caminho do projeto
+        if mia_db := get_db_in_xlsx(local_directory):
+            shutil.move(mia_db, os.path.join(dir, 'RelatorioMIA.xlsx'))
 
         zip_directory(dir, zip)
         # shutil.rmtree(dir)
@@ -585,10 +581,11 @@ def stepMia(action:str, step:str, log_name:str, path_log:str, erp_code:int|str='
         raise Exception('Não foi possível carregar os argumentos na função stepMia()')
     
     end_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S') if end_time else ""
+    robot_name = getRobotNameById(url, token, robot_id, customer_id)
         
     sendStap(url, token, robot_id, customer_id, {
         'action': action,
-        'description': getRobotNameById(url, token, robot_id, customer_id),
+        'description': robot_name,
         'step': step,
         'path_log': log_name,
         'path_url_log': path_log,
@@ -601,3 +598,24 @@ def stepMia(action:str, step:str, log_name:str, path_log:str, erp_code:int|str='
         "start_date": start_time,
         "end_date": end_date
     })
+    
+def get_db_in_xlsx(caminho):
+    '''Função para baixar o banco de dados da MIA em formato xlsx'''
+    
+    if not caminho:
+        logger.log('Caminho não definido')
+        return False
+    
+    mia_db = None
+    for files in os.listdir(caminho):
+        if files.endswith('.db'):
+            mia_db = files
+            break
+    
+    if not mia_db:
+        logger.log('Não foi possível encontrar o arquivo .db')
+        return False
+    
+    sql2excel.SqliteToExcel(os.path.join(caminho, mia_db), os.path.join(caminho), 'RelatorioMIA')
+    
+    return os.path.join(caminho, 'RelatorioMIA.xlsx')
