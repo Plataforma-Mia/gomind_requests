@@ -11,15 +11,18 @@ import sys
 from dotenv import load_dotenv
 import shutil
 import gomind_sqlite_to_excel as sql2excel
+try:
+    from logger import logger
+except:
+    class Logger:
+        def log(self, message, status="info"):
+            print("{} - [{}]".format(message, status))
+
+    logger = Logger()
+    
 CLI_ARGUMENTS = cli.get_sys_args_as_dict()
 
 start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-class Logger:
-    def log(self, message, status="info"):
-        print("{} - [{}]".format(message, status))
-
-logger = Logger()
 
 load_dotenv()
 user        = os.getenv('MIA_LOGIN')
