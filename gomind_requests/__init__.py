@@ -604,21 +604,25 @@ def stepMia(action:str, step:str, log_name:str, path_log:str, erp_code:int|str='
     
 def get_db_in_xlsx(caminho):
     '''Função para baixar o banco de dados da MIA em formato xlsx'''
+    try:
+        if not caminho:
+            logger.log('Caminho não definido')
+            return False
+        
+        mia_db = None
+        for files in os.listdir(caminho):
+            if files.endswith('.db'):
+                mia_db = files
+                break
+        
+        if not mia_db:
+            logger.log('Não foi possível encontrar o arquivo .db')
+            return False
+        
+        sql2excel.SqliteToExcel(os.path.join(caminho, mia_db), os.path.join(caminho), 'RelatorioMIA')
+        return os.path.join(caminho, 'RelatorioMIA.xlsx')
     
-    if not caminho:
-        logger.log('Caminho não definido')
+    except Exception as e:
+        logger.log(f'Erro em get_db_in_xlsx(): {e}')
         return False
     
-    mia_db = None
-    for files in os.listdir(caminho):
-        if files.endswith('.db'):
-            mia_db = files
-            break
-    
-    if not mia_db:
-        logger.log('Não foi possível encontrar o arquivo .db')
-        return False
-    
-    sql2excel.SqliteToExcel(os.path.join(caminho, mia_db), os.path.join(caminho), 'RelatorioMIA')
-    
-    return os.path.join(caminho, 'RelatorioMIA.xlsx')
