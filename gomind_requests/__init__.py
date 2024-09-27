@@ -554,7 +554,7 @@ def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, compete
 
         return zip
     except Exception as e:
-        print(e)
+        logger.log(e)
         return False
 
 
