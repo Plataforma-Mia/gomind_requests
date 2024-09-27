@@ -547,7 +547,7 @@ def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, compete
         
         # Levando em consideração que o local_directory é sempre o caminho do projeto
         if mia_db := get_db_in_xlsx(local_directory):
-            shutil.move(mia_db, os.path.join(dir, 'RelatorioMIA.xlsx'))
+            shutil.copyfile(mia_db, os.path.join(dir, 'RelatorioMIA.xlsx'))
 
         zip_directory(dir, zip)
         # shutil.rmtree(dir)
