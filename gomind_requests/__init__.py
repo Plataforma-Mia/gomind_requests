@@ -145,8 +145,8 @@ def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
     data        = getCustomersByRobot(url, token, robot_id, customer_id)
     logger.log('definiu data: {}'.format(data))
     if isinstance(data, str):
-        print(data)
-        print("Erro ao buscar dados do cliente")
+        logger.log(data)
+        logger.log("Erro ao buscar dados do cliente")
         return False
     try:
         logger.log('Entrou no try/exc do dataConfig()')
@@ -178,7 +178,7 @@ def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
         return getTotalData(dataList, config)
     
     except Exception as e:
-        print(f'erro em dataConfig(): {e}')
+        logger.log(f'erro em dataConfig(): {e}')
         return False
     
 def remove_duplicates(list_of_dicts):
@@ -220,7 +220,7 @@ def sendCustomerEmployee(url, token, robot_id, customer_id, data):#testar
     ]
     
     if len(data) != len(data_keys):
-        print("Quantidade de campos inválida")
+        logger.log("Quantidade de campos inválida")
         return False
     
     data = dict(zip(data_keys, data))
@@ -249,7 +249,7 @@ def sendLog(url, token, robot_id, customer_id, data):
     ]
 
     if len(data) != len(data_keys):
-        print("Quantidade de campos inválida")
+        logger.log("Quantidade de campos inválida")
         return False
     
     data = dict(zip(data_keys, data))
@@ -328,7 +328,7 @@ def sendFilesToS3(
 
     # Verificar se o diretório existe
     if not os.path.exists(files_path):
-        print(f"O diretório {files_path} não existe.")
+        logger.log(f"O diretório {files_path} não existe.")
         return
 
     # Listar arquivos no diretório
@@ -336,7 +336,7 @@ def sendFilesToS3(
 
     # Verificar se há arquivos no diretório
     if not files:
-        print(f"Não há arquivos para enviar no diretório {files_path}.")
+        logger.log(f"Não há arquivos para enviar no diretório {files_path}.")
         return
     
     # Upload de arquivos para o S3
@@ -353,13 +353,13 @@ def sendFilesToS3(
 
         try:
             s3.upload_file(file_path, bucket_name, s3_file_path)
-            print(
+            logger.log(
                 f"Arquivo {file_path} enviado para {s3_file_path} no bucket {bucket_name}."
             )
         except Exception as e:
-            print(f"Erro ao enviar {file_path} para {s3_file_path}: {e}")
+            logger.log(f"Erro ao enviar {file_path} para {s3_file_path}: {e}")
 
-    print("Envio de arquivos concluído.")
+    logger.log("Envio de arquivos concluído.")
     return s3_file_path
 
 def sendFileToS3(
@@ -373,12 +373,12 @@ def sendFileToS3(
 
     # Verificar se o diretório existe
     if not os.path.exists(file_path):
-        print(f"O diretório {file_path} não existe.")
+        logger.log(f"O diretório {file_path} não existe.")
         return
 
     # Verificar se há arquivos no diretório
     if not os.path.isfile(file_path):
-        print(f"Não há arquivos para enviar no diretório {file_path}.")
+        logger.log(f"Não há arquivos para enviar no diretório {file_path}.")
         return
 
     file_name = os.path.basename(file_path)
@@ -395,13 +395,13 @@ def sendFileToS3(
 
     try:
         s3.upload_file(file_path, bucket_name, s3_file_path)
-        print(
+        logger.log(
             f"Arquivo {file_path} enviado para {s3_file_path} no bucket {bucket_name}."
         )
     except Exception as e:
-        print(f"Erro ao enviar {file_path} para {s3_file_path}: {e}")
+        logger.log(f"Erro ao enviar {file_path} para {s3_file_path}: {e}")
 
-    print("Envio de arquivos concluído.")
+    logger.log("Envio de arquivos concluído.")
     return s3_file_path
 
 def getFileFromS3(
@@ -425,14 +425,14 @@ def getFileFromS3(
 
     try:
         s3.download_file(bucket_name, s3_file_path_new, local_file_path)
-        print(
+        logger.log(
             f"Arquivo {s3_file_path_new} enviado para {local_file_path}."
         )
     except Exception as e:
-        print(f"Erro ao baixar {s3_file_path_new} para {local_file_path}: {e}")
+        logger.log(f"Erro ao baixar {s3_file_path_new} para {local_file_path}: {e}")
         return
 
-    print("Download de arquivos concluído.")
+    logger.log("Download de arquivos concluído.")
 
 
 def list_s3_objects(bucket: str, prefix: str, filter_pfx: bool = False) -> list:
@@ -450,7 +450,7 @@ def list_s3_objects(bucket: str, prefix: str, filter_pfx: bool = False) -> list:
         
         return [obj["Key"] for obj in objects if obj["Key"] != prefix]
     except Exception as e:
-        print(f"Erro ao listar objetos do S3: {e}")
+        logger.log(f"Erro ao listar objetos do S3: {e}")
         return []
 
 
@@ -462,13 +462,13 @@ def download_s3_objects(bucket: str, objects: list, local_dir: Path):
         file_name = Path(obj).name
         file_path = local_dir / file_name
 
-        print(f"Baixando {obj} para {file_path}")
+        logger.log(f"Baixando {obj} para {file_path}")
 
         try:
             s3 = boto3.client("s3")
             s3.download_file(bucket, obj, str(file_path))
         except Exception as e:
-            print(f"Erro ao baixar {obj}: {e}")
+            logger.log(f"Erro ao baixar {obj}: {e}")
 
 
 def get_instance_id():
