@@ -201,6 +201,8 @@ def removeNonAlphanumeric(string:str | None) -> str | None:
 
 def emptyStringToNone(dict:dict) -> dict:
     for chave, string in dict.items():
+        if string is str:
+            dict[chave] = string.strip
         if string == '':
             dict[chave] = None
     return dict
