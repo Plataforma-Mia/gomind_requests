@@ -2,3 +2,7 @@ __pycache__
 venv/
 .env
 test_lib.py
+mia.db*
+s3_download/
+arquivos_baixados.zip
+RelatorioMIA.xlsx
