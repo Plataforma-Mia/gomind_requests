@@ -630,4 +630,22 @@ def get_db_in_xlsx(caminho):
     except Exception as e:
         logger.log(f'Erro em get_db_in_xlsx(): {e}')
         return False
-    
+
+def getStepComp(url: str, token: str, robot_id: int|str, customer_id: int|str, erp_code: int|str, month: str, year: str) -> str | bool:
+
+    header      = {"Authorization": f"Bearer {token}"}
+
+    response    = requests.get(f'{url}/api/robot_step_log?all_data=true&robot_id={robot_id}&customer_id={customer_id}&erp_code={erp_code}', headers=header) 
+
+    try:
+        dados = response.json()['robot_log']['data']
+        for log in dados:
+            competence = str(log['robot_log']['competence_month']) + '/' + str(log['robot_log']['competence_year'])
+
+            if competence == f'{month}/{year}':
+                response = str(log['robot_log']['step'])
+                return response
+
+        return False
+    except:
+        return False

@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name="gomind_requests",
     python_requires=">=3.6",
-    version="0.0.37",
+    version="0.0.38",
     description="GoMind request functions",
     url="https://github.com/GrupoDomini/gomind_requests.git",
     author="JeffersonCarvalhoGD",
