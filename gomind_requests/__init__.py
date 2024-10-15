@@ -312,11 +312,12 @@ def getStep(url: str, token: str, robot_id: int|str, customer_id: int|str, erp_c
         response    = requests.get(f'{url}/api/robot_step_log?robot_id={robot_id}&customer_id={customer_id}', headers=header)
    
     try:
+        competence = str(response.json()['robot_log']['data'][0]['robot_log']['competence_month']) + '/' + str(response.json()['robot_log']['data'][0]['robot_log']['competence_year'])
         response = str(response.json()['robot_log']['data'][0]['robot_log']['step'])
     except:
         response = False
 
-    return response
+    return response, competence
 
 
 def sendFilesToS3(
