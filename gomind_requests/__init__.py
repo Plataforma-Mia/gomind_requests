@@ -548,7 +548,8 @@ def zip_directory(folder_path, output_filename):
 def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, competencia:str = '', to_ignore:list = []) -> str|bool:
     try:
         dir = s3_dowloadAll(client_id, robot_id, local_directory, competencia, to_ignore)
-        zip = os.path.join(local_directory, "arquivos_baixados.zip")
+        current_date = datetime.now().strftime('%Y%m')
+        zip = os.path.join(local_directory, f"arquivos_baixados_{current_date}.zip")
         
         # Levando em consideração que o local_directory é sempre o caminho do projeto
         if mia_db := get_db_in_xlsx(local_directory):
