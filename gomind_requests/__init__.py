@@ -121,7 +121,8 @@ def getCustomersByRobot(url, token, robot_id, customer_id):
     logger.log('Passou no requests.get para customers_by_robot')
     try:
         response = response.json()['children_customers']
-        logger.log(f'response no try/excpt do getcustomersByRobot: {response}')
+        if isinstance(response, list) and not response:
+            logger.log('A resposta de getCustomersByRobot() é uma lista vazia. Não existem clientes associados ao robô.')
     except Exception as e:
         logger.log(f'erro em getCustomersByRobot(): {e}')
         response = False
@@ -144,11 +145,12 @@ def getRobotNameById(url, token, robot_id, customer_id):
 def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
     dataList    = []
     data        = getCustomersByRobot(url, token, robot_id, customer_id)
-    logger.log('definiu data: {}'.format(data))
     if isinstance(data, str):
         logger.log(data)
         logger.log("Erro ao buscar dados do cliente")
         return False
+    if isinstance(data, list) and not data:
+        logger.log('A resposta de dataConfig() é uma lista vazia. Verifique a associação do cliente com o tobô.')
     try:
         logger.log('Entrou no try/exc do dataConfig()')
 
@@ -547,7 +549,8 @@ def zip_directory(folder_path, output_filename):
 def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, competencia:str = '', to_ignore:list = []) -> str|bool:
     try:
         dir = s3_dowloadAll(client_id, robot_id, local_directory, competencia, to_ignore)
-        zip = os.path.join(local_directory, "arquivos_baixados.zip")
+        current_date = datetime.now().strftime('%Y%m')
+        zip = os.path.join(local_directory, f"arquivos_baixados_{current_date}.zip")
         
         # Levando em consideração que o local_directory é sempre o caminho do projeto
         if mia_db := get_db_in_xlsx(local_directory):
