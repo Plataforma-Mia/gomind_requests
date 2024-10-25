@@ -52,7 +52,8 @@ class CustomersData:
     city_hall_login_2:          str | None
     city_hall_password_2:       str | None  
     employer_web_user:          str | None  
-    employer_web_password:      str | None  
+    employer_web_password:      str | None
+    accountant_code:            str | None 
 
 
 @dataclass
