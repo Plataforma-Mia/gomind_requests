@@ -1,5 +1,5 @@
 import requests
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 import boto3
 import os
 from pathlib import Path
@@ -9,6 +9,7 @@ import gomind_cli as cli
 from datetime import datetime
 import sys
 from dotenv import load_dotenv
+import gomind_cli as cli
 import shutil
 import gomind_sqlite_to_excel as sql2excel
 try:
@@ -28,7 +29,8 @@ load_dotenv()
 user        = os.getenv('MIA_LOGIN')
 passwd      = os.getenv('MIA_PASSWORD')
 url         = os.getenv('MIA_URL')
-
+ANO_MIA     = CLI_ARGUMENTS.get("competenceMonth")
+MES_MIA     = CLI_ARGUMENTS.get("competenceYear")
 @dataclass
 class CustomersData:
     #informações do cliente
@@ -53,6 +55,7 @@ class CustomersData:
     city_hall_password_2:       str | None  
     employer_web_user:          str | None  
     employer_web_password:      str | None
+    apuration_regime:           str | None
 
 
 @dataclass
@@ -80,6 +83,19 @@ class OfficeConfig:
     updated_at:                 str | None
     certificate:                list | None
 
+    # Mapeamento dos campos de config da API (API -> OfficeConfig)
+    # Acrescentar campos com nomes diferentes aquiv
+    field_mapping = {
+        'email':            'usuario',
+        'password':         'senha',
+        'nibo_login':       'usuario_nibo',
+        'nibo_password':    'senha_nibo',
+        'dominio_user':     'usuario_dominio',
+        'dominio_password': 'senha_dominio',
+        'recipient_email':  'destinatario_email',
+        'copy_email':       'email_cc',
+    }
+
 @dataclass
 class TotalData:
     customers:  list
@@ -87,11 +103,25 @@ class TotalData:
 
 
 def getOfficeData(data) -> OfficeConfig:
-    return OfficeConfig(*data.values())
+    valid_fields    = {field.name for field in fields(OfficeConfig)}
+    mapped_data     = {}
+    
+    for api_field, value in data.items():
+        # Checar se tem mapeamento para esse campo
+        if api_field in OfficeConfig.field_mapping:
+            dataclass_field = OfficeConfig.field_mapping[api_field]
+            mapped_data[dataclass_field] = value
+        # Se nenhum mapeamento existir, tentar usar nome original
+        elif api_field in valid_fields:
+            mapped_data[api_field] = value
+    
+    return OfficeConfig(**mapped_data)
 
 
 def getCustomerData(data) -> CustomersData:
-    return CustomersData(*data.values())
+    dataclass_fields = {field.name for field in fields(CustomersData)}
+    filtered_data = {k: v for k, v in data.items() if k in dataclass_fields}
+    return CustomersData(**filtered_data)
 
 
 def getTotalData(data, config) -> TotalData:
@@ -141,6 +171,19 @@ def getRobotNameById(url, token, robot_id, customer_id):
         return False
 
 
+def getRobotCodeById(url, token, robot_id, customer_id):
+    header      = {"Authorization": f"Bearer {token}"}
+    response    = requests.get(f'{url}/api/robots?customer_id={customer_id}6&all_data=true', headers=header)
+    
+    try:
+        data = response.json().get('robots', {}).get('data', [])
+        for robot in data:
+            if robot.get('id') == robot_id:
+                return robot.get('name')
+    except:
+        return False
+
+
 def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
     dataList    = []
     data        = getCustomersByRobot(url, token, robot_id, customer_id)
@@ -170,8 +213,14 @@ def dataConfig(url, token, robot_id, customer_id) -> CustomersData:
 
         config.certificate = remove_duplicates(cert)
         toRemove    = {'office_configuration','updated_at', 'created_at', 'robot'}
+        
+        clients_id = CLI_ARGUMENTS.get("customers", [])
 
         for object in data:
+            
+            if len(clients_id) != 0  and object['id'] not in clients_id:
+                continue
+
             clientInfo  = {k: v for k, v in object.items() if k not in toRemove}
             clientInfo['municipal_registration'] = removeNonAlphanumeric(clientInfo['municipal_registration'])
             emptyStringToNone(clientInfo)
@@ -317,7 +366,7 @@ def getStep(url: str, token: str, robot_id: int|str, customer_id: int|str, erp_c
         competence = str(response.json()['robot_log']['data'][0]['robot_log']['competence_month']) + '/' + str(response.json()['robot_log']['data'][0]['robot_log']['competence_year'])
         response = str(response.json()['robot_log']['data'][0]['robot_log']['step'])
     except:
-        response = False
+        return False
 
     return response, competence
 
@@ -545,11 +594,18 @@ def zip_directory(folder_path, output_filename):
                 file_path = os.path.join(root, file)
                 zipf.write(file_path, os.path.relpath(file_path, folder_path))
 
+#colocar data correta no arquivo
 def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, competencia:str = '', to_ignore:list = []) -> str|bool:
     try:
         dir = s3_dowloadAll(client_id, robot_id, local_directory, competencia, to_ignore)
-        current_date = datetime.now().strftime('%Y%m')
-        zip = os.path.join(local_directory, f"arquivos_baixados_{current_date}.zip")
+        current_date    = datetime.now().strftime('%Y%m%H%M%S')
+        competence      = str(CLI_ARGUMENTS.get('competenceMonth')) + '_' + str(CLI_ARGUMENTS.get('competenceYear'))
+        token           = getToken(url, user, passwd)
+        robotName       = getRobotCodeById(url, token, robot_id, client_id)
+        if not robotName:
+            robotName = 'arquivos_baixados'
+
+        zip             = os.path.join(local_directory, f"{robotName}_{competence}-{current_date}.zip")
         
         # Levando em consideração que o local_directory é sempre o caminho do projeto
         if mia_db := get_db_in_xlsx(local_directory):
@@ -564,6 +620,37 @@ def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, compete
     except Exception as e:
         logger.log(e)
         return False
+###
+def s3_link_generate(s3_file_path: str, client_id: str | int, robot_id: str | int, mes: int = None, ano: int = None, nome_empresa: str = None
+) -> None:
+    
+    s3              = boto3.client("s3")
+    file_name       = os.path.basename(s3_file_path)
+    # local_file_path = os.path.join(local_file_path, file_name)
+
+    bucket_name     = os.getenv('BUCKET_NAME')
+
+    if not bucket_name:
+        raise ValueError("Variável de ambiente BUCKET_NAME não definida.")
+
+    # Upload de arquivo para o S3
+    if mes == None or ano == None:
+        s3_file_path_new = f"clients/{client_id}/robot/{robot_id}/{file_name}"
+    else:
+        s3_file_path_new = f"clients/{client_id}/robot/{robot_id}/{nome_empresa}/{mes}_{ano}/{file_name}"
+
+    try:
+        # s3.download_file(bucket_name, s3_file_path_new, local_file_path)
+        s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': s3_file_path_new}, ExpiresIn=(((60*60)*24)*365)*5)
+
+        logger.log(
+            f"Link gerado com sucesso {s3_file_path_new}."
+        )
+    except Exception as e:
+        logger.log(f"Erro ao gerar link para {s3_file_path_new}: {e}")
+        return
+
+    logger.log("Download de arquivos concluído.")
 
 
 def stepMia(action:str, step:str, log_name:str, path_log:str, erp_code:int|str='', archive_name:str='', path_url:str='', end_time: bool=False):
