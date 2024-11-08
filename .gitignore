@@ -6,3 +6,4 @@ mia.db*
 s3_download/
 arquivos_baixados.zip
 RelatorioMIA.xlsx
+run_bot.py

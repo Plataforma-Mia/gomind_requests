@@ -489,7 +489,7 @@ def getFileFromS3(
     logger.log("Download de arquivos concluído.")
 
 
-def list_s3_objects(bucket: str, prefix: str, filter_pfx: bool = False) -> list:
+def list_s3_objects(bucket: str, prefix: str, filter: bool | str = False) -> list:
     """
     Lista objetos em um bucket S3 dado um prefixo.
     Se filter_pfx for True, retorna apenas arquivos com a extensão .pfx.
@@ -499,8 +499,8 @@ def list_s3_objects(bucket: str, prefix: str, filter_pfx: bool = False) -> list:
         response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
         objects = response.get("Contents", [])
         
-        if filter_pfx:
-            objects = [obj for obj in objects if obj["Key"].endswith('.pfx')]
+        if filter:
+            objects = [obj for obj in objects if obj["Key"].endswith(f'{filter}')]
         
         return [obj["Key"] for obj in objects if obj["Key"] != prefix]
     except Exception as e:
@@ -621,15 +621,25 @@ def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, compete
         logger.log(e)
         return False
 ###
-def s3_link_generate(s3_file_path: str, client_id: str | int, robot_id: str | int, mes: int = None, ano: int = None, nome_empresa: str = None
+def s3_link_generate(mes: int = None, ano: int = None, nome_empresa: str = None
 ) -> None:
     
+    client_id       = sys.argv[1]
+    robot_id        = sys.argv[2]
     s3              = boto3.client("s3")
-    file_name       = os.path.basename(s3_file_path)
+    # file_name       = os.path.basename(s3_file_path)
     # local_file_path = os.path.join(local_file_path, file_name)
 
     bucket_name     = os.getenv('BUCKET_NAME')
 
+    teste  = list_s3_objects(bucket_name, f"clients/{client_id}/robot/{robot_id}/", '.zip')
+    #pegar a data atual do arquivo 
+    #comparar com a data atual
+    #pegar o ultimo gerado
+    
+    teste.sort()
+    print(teste)
+    
     if not bucket_name:
         raise ValueError("Variável de ambiente BUCKET_NAME não definida.")
 
