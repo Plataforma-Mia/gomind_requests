@@ -571,7 +571,7 @@ def s3_dowloadAll(client_id:int|str, robot_id:int|str, local_directory:str, comp
                     relative_path = os.path.relpath(s3_key, s3_prefix)
                     local_file_path = os.path.join(local_directory, relative_path)
                     
-                    default_ignore    = [f'logs{os.sep}', 'arquivos_baixados.zip']
+                    default_ignore    = [f'logs{os.sep}', 'arquivos_baixados.zip', '.zip']
                     to_ignore         = to_ignore + default_ignore
 
                     if any(ignore_str in relative_path for ignore_str in to_ignore):
@@ -598,8 +598,8 @@ def zip_directory(folder_path, output_filename):
 def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, competencia:str = '', to_ignore:list = []) -> str|bool:
     try:
         dir = s3_dowloadAll(client_id, robot_id, local_directory, competencia, to_ignore)
-        current_date    = datetime.now().strftime('%Y%m%H%M%S')
-        competence      = str(CLI_ARGUMENTS.get('competenceMonth')) + '_' + str(CLI_ARGUMENTS.get('competenceYear'))
+        current_date    = datetime.now().strftime('%Y%m%d%H%M%S')
+        competence      = str(CLI_ARGUMENTS.get('competenceMonth')) + str(CLI_ARGUMENTS.get('competenceYear'))
         token           = getToken(url, user, passwd)
         robotName       = getRobotCodeById(url, token, robot_id, client_id)
         if not robotName:
@@ -621,46 +621,44 @@ def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, compete
         logger.log(e)
         return False
 ###
-def s3_link_generate(mes: int = None, ano: int = None, nome_empresa: str = None
-) -> None:
+def s3_zipLink_generate() -> str:
     
     client_id       = sys.argv[1]
     robot_id        = sys.argv[2]
     s3              = boto3.client("s3")
-    # file_name       = os.path.basename(s3_file_path)
-    # local_file_path = os.path.join(local_file_path, file_name)
-
     bucket_name     = os.getenv('BUCKET_NAME')
 
-    teste  = list_s3_objects(bucket_name, f"clients/{client_id}/robot/{robot_id}/", '.zip')
-    #pegar a data atual do arquivo 
-    #comparar com a data atual
-    #pegar o ultimo gerado
+    file            = list_s3_objects(bucket_name, f"clients/{client_id}/robot/{robot_id}/", '.zip')
+ 
+    if not file:
+        logger.log(f"Não há arquivos para enviar no diretório {file}.")
+        return 
     
-    teste.sort()
-    print(teste)
+    file = file[get_last_file_position(file)]
     
     if not bucket_name:
         raise ValueError("Variável de ambiente BUCKET_NAME não definida.")
 
-    # Upload de arquivo para o S3
-    if mes == None or ano == None:
-        s3_file_path_new = f"clients/{client_id}/robot/{robot_id}/{file_name}"
-    else:
-        s3_file_path_new = f"clients/{client_id}/robot/{robot_id}/{nome_empresa}/{mes}_{ano}/{file_name}"
-
+    # Gerando link de download
     try:
-        # s3.download_file(bucket_name, s3_file_path_new, local_file_path)
-        s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': s3_file_path_new}, ExpiresIn=(((60*60)*24)*365)*5)
+        link = s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': file}, ExpiresIn=(((60*60)*24)*365)*5)
 
         logger.log(
-            f"Link gerado com sucesso {s3_file_path_new}."
+            f"Link gerado com sucesso {file}."
         )
+        return link
+    
     except Exception as e:
-        logger.log(f"Erro ao gerar link para {s3_file_path_new}: {e}")
+        logger.log(f"Erro ao gerar link para {file}: {e}")
         return
 
-    logger.log("Download de arquivos concluído.")
+def get_last_file_position(array:list) -> int:
+    if not array:
+        return 
+    
+    new = list(map(lambda x: x.split('_')[-1].split('-')[-1].replace('.zip', ''), array))
+    new = [int(x) if x.isdigit() else 0 for x in new]
+    return new.index(max(new))
 
 
 def stepMia(action:str, step:str, log_name:str, path_log:str, erp_code:int|str='', archive_name:str='', path_url:str='', end_time: bool=False):
