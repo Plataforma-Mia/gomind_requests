@@ -623,15 +623,15 @@ def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, compete
 ###
 def s3_zipLink_generate() -> str:
     
-    client_id       = sys.argv[1]
-    robot_id        = sys.argv[2]
+    robot_id        = sys.argv[1]
+    client_id       = sys.argv[2]
     s3              = boto3.client("s3")
     bucket_name     = os.getenv('BUCKET_NAME')
 
     file            = list_s3_objects(bucket_name, f"clients/{client_id}/robot/{robot_id}/", '.zip')
  
     if not file:
-        logger.log(f"Não há arquivos para enviar no diretório {file}.")
+        logger.log(f"Não há arquivos para enviar no diretório {f"clients/{client_id}/robot/{robot_id}/"}.")
         return 
     
     file = file[get_last_file_position(file)]
