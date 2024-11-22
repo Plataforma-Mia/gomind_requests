@@ -71,6 +71,8 @@ class OfficeConfig:
     senha_nibo:                 str | None
     usuario_dominio:            str | None
     senha_dominio:              str | None
+    procuration_user:           str | None
+    procuration_password:       str | None
     #diretorio:                  str | None
     destinatario_email:         str | None
     email_cc:                   str | None
