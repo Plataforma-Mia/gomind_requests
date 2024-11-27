@@ -655,7 +655,7 @@ def s3_link_generate(s3_file_path: str, client_id: str | int, robot_id: str | in
     logger.log("Download de arquivos concluído.")
 
 
-def stepMia(action:str, step:str, log_name:str, path_log:str, erp_code:int|str='', archive_name:str='', path_url:str='', end_time: bool=False):
+def stepMia(action:str, step:str|int, log_name:str, path_log:str, erp_code:int|str='', archive_name:str='', path_url:str='', end_time: bool=False):
     '''Função para enviar o step para a MIA\n
     :param action: ação que está sendo realizada
     :param step: passo do processo
@@ -679,6 +679,23 @@ def stepMia(action:str, step:str, log_name:str, path_log:str, erp_code:int|str='
     else:
         logger.log("Não foi possível carregar os argumentos")
         raise Exception('Não foi possível carregar os argumentos na função stepMia()')
+    
+    steps = getStepFromMIA(url, token, robot_id)
+    if len(steps) == 0:
+        raise Exception('steps não cadastrados na MIA')
+
+    match step:
+        case "START":
+            step = steps[0]
+        case "ERROR":
+            step = steps[-1]
+        case "FINISH":
+            step = steps[-2]
+        case _:
+            if not isinstance(step, int):
+                raise Exception('O step deve ser um número inteiro')
+                      
+            step = steps[int(step)]
     
     end_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S') if end_time else ""
     robot_name = getRobotNameById(url, token, robot_id, customer_id)
@@ -741,3 +758,19 @@ def getStepComp(url: str, token: str, robot_id: int|str, customer_id: int|str, e
         return False
     except:
         return False
+
+
+def getStepFromMIA(url, token, robot_id) -> str | bool:
+
+    header      = {"Authorization": f"Bearer {token}"}
+    response    = requests.get(f'{url}/api/robot_has_steps?robot_id={robot_id}&all_data=true', headers=header)
+    
+    try:
+        data = response.json().get('steps', {}).get('data', [])
+    except:
+        return False
+    
+    result = [item['name'] for item in data]
+
+    return result
+
