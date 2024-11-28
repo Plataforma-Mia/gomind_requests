@@ -690,9 +690,10 @@ def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:i
         case "ERROR":
             step            = steps[-1]
             actionMensage   = getBugInfo(url, token, robot_id, action)
-            if not actionMensage:
-                actionMensage = f"Erro [{action}] não identificado"
-            action = actionMensage.get('error_handling')
+            action          = f"Erro [{action}] não identificado"
+            
+            if  actionMensage:
+                action = actionMensage.get('error_handling')
 
         case "FINISH":
             step = steps[-2]
