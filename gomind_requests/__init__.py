@@ -655,7 +655,7 @@ def s3_link_generate(s3_file_path: str, client_id: str | int, robot_id: str | in
     logger.log("Download de arquivos concluído.")
 
 
-def stepMia(action:str, step:str|int, log_name:str, path_log:str, erp_code:int|str='', archive_name:str='', path_url:str='', end_time: bool=False):
+def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:int|str='', archive_name:str='', path_url:str='', end_time: bool=False):
     '''Função para enviar o step para a MIA\n
     :param action: ação que está sendo realizada
     :param step: passo do processo
@@ -688,7 +688,12 @@ def stepMia(action:str, step:str|int, log_name:str, path_log:str, erp_code:int|s
         case "START":
             step = steps[0]
         case "ERROR":
-            step = steps[-1]
+            step            = steps[-1]
+            actionMensage   = getBugInfo(url, token, robot_id, action)
+            if not actionMensage:
+                actionMensage = f"Erro [{action}] não identificado"
+            action = actionMensage.get('error_handling')
+
         case "FINISH":
             step = steps[-2]
         case _:
@@ -697,8 +702,8 @@ def stepMia(action:str, step:str|int, log_name:str, path_log:str, erp_code:int|s
                       
             step = steps[int(step)]
     
-    end_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S') if end_time else ""
-    robot_name = getRobotNameById(url, token, robot_id, customer_id)
+    end_date    = datetime.now().strftime('%Y-%m-%d %H:%M:%S') if end_time else ""
+    robot_name  = getRobotNameById(url, token, robot_id, customer_id)
         
     sendStap(url, token, robot_id, customer_id, {
         'action': action,
@@ -760,7 +765,7 @@ def getStepComp(url: str, token: str, robot_id: int|str, customer_id: int|str, e
         return False
 
 
-def getStepFromMIA(url, token, robot_id) -> str | bool:
+def getStepFromMIA(url: str, token: str, robot_id: int|str) -> str | bool:
 
     header      = {"Authorization": f"Bearer {token}"}
     response    = requests.get(f'{url}/api/robot_has_steps?robot_id={robot_id}&all_data=true', headers=header)
@@ -774,3 +779,14 @@ def getStepFromMIA(url, token, robot_id) -> str | bool:
 
     return result
 
+def getBugInfo(url: str, token: str, robot_id: int|str, bug_id) -> dict | bool:
+
+    header      = {"Authorization": f"Bearer {token}"}
+    response    = requests.get(f'{url}/api/bugs?robot_id={robot_id}?id={bug_id}&all_data=true', headers=header)
+    
+    try:
+        data = response.json().get('bugs', {}).get('data', [])[0]
+    except:
+        return False
+    
+    return data
