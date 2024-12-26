@@ -547,11 +547,9 @@ def download_file(s3, bucket, s3_key, local_path):
 
 def s3_dowloadAll(client_id:int|str, robot_id:int|str, local_directory:str, competencia:str='', to_ignore:list = []) -> str|bool:
     try:
+        local_directory = os.path.join(local_directory, 's3_download')
 
-        local_directory = os.path.join(local_directory,'s3_download')
-
-        # bucket_name       = 'repositorio-mia'
-        s3_prefix         = f'clients/{client_id}/robot/{robot_id}/'
+        s3_prefix = f'clients/{client_id}/robot/{robot_id}/'
         bucket_name = os.getenv('BUCKET_NAME')
 
         if not bucket_name:
@@ -561,32 +559,36 @@ def s3_dowloadAll(client_id:int|str, robot_id:int|str, local_directory:str, comp
         s3 = boto3.client('s3')
 
         # Lista todos os objetos no bucket com o prefixo especificado
-        paginator   = s3.get_paginator('list_objects_v2')
-        pages       = paginator.paginate(Bucket=bucket_name, Prefix=s3_prefix)
+        paginator = s3.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=bucket_name, Prefix=s3_prefix)
 
         # Itera sobre os arquivos e faz o download recursivo
         for page in pages:
             if 'Contents' in page:
                 for obj in page['Contents']:
-
                     s3_key = obj['Key']
                     relative_path = os.path.relpath(s3_key, s3_prefix)
                     local_file_path = os.path.join(local_directory, relative_path)
-                    
-                    default_ignore    = [f'logs{os.sep}', 'arquivos_baixados.zip']
-                    to_ignore         = to_ignore + default_ignore
+
+                    default_ignore = [f'logs{os.sep}', '.zip']
+                    to_ignore = to_ignore + default_ignore
 
                     if any(ignore_str in relative_path for ignore_str in to_ignore):
                         continue
-                    
-                    if  competencia not in relative_path:
+
+                    if competencia and competencia not in relative_path:
+                        continue
+
+                    # Verificar se o arquivo é um arquivo .zip
+                    if s3_key.endswith('.zip'):
                         continue
 
                     download_file(s3, bucket_name, s3_key, local_file_path)
                     logger.log(f'Arquivo {s3_key} baixado para {local_file_path}')
 
         return local_directory
-    except:
+    except Exception as e:
+        logger.log(f'Erro em s3_dowloadAll: {e}')
         return False
 
 def zip_directory(folder_path, output_filename):
