@@ -655,7 +655,7 @@ def s3_link_generate(s3_file_path: str, client_id: str | int, robot_id: str | in
     logger.log("Download de arquivos concluído.")
 
 
-def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:int|str='', archive_name:str='', path_url:str='', end_time: bool=False):
+def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:int|str='', children_customers: list = [],  archive_name:str='', path_url:str='', end_time: bool=False):
     '''Função para enviar o step para a MIA\n
     :param action: ação que está sendo realizada
     :param step: passo do processo
@@ -669,9 +669,10 @@ def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:i
     
     token = getToken(url, user, passwd)
     
-    MES_MIA = CLI_ARGUMENTS.get('competenceMonth') or ""
-    ANO_MIA = CLI_ARGUMENTS.get('competenceYear') or ""
-    USER_ID = CLI_ARGUMENTS.get('userId')
+    MES_MIA     = CLI_ARGUMENTS.get('competenceMonth') or ""
+    ANO_MIA     = CLI_ARGUMENTS.get('competenceYear') or ""
+    instance_id = get_instance_id() or None
+    USER_ID     = CLI_ARGUMENTS.get('userId') or 95
     
     if len(sys.argv) > 1:
         robot_id    = sys.argv[1]#pegar via argumento
@@ -699,7 +700,7 @@ def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:i
             step = steps[-2]
         case _:
             if not isinstance(step, int):
-                raise Exception('O step deve ser um número inteiro')
+                raise Exception(f'O step [{step}] deve ser um número inteiro')
                       
             step = steps[int(step)]
     
@@ -707,17 +708,19 @@ def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:i
     robot_name  = getRobotNameById(url, token, robot_id, customer_id)
         
     sendStap(url, token, robot_id, customer_id, {
-        'action': action,
-        'description': robot_name,
-        'step': step,
-        'path_log': log_name,
-        'path_url_log': path_log,
+        "instance_id": instance_id,
+        "action": action,
+        "description": robot_name,
+        "step": step,
+        "path_log": log_name,
+        "path_url_log": path_log,
         "erp_code": erp_code,
         "path_customer": archive_name,
         "path_url_customer": path_url,
         "competence_month": MES_MIA, 
         "competence_year": ANO_MIA,
-        "user_id": USER_ID,
+        "user_id": USER_ID,#95
+        "children_customers": children_customers,
         "start_date": start_time,
         "end_date": end_date
     })
