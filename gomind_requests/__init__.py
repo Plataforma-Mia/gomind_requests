@@ -678,6 +678,9 @@ def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:i
     except:
         instance_id = None
     USER_ID     = CLI_ARGUMENTS.get('userId') or 95
+
+    if not isinstance(erp_code, list):
+        erp_code = [erp_code]
     
     if len(sys.argv) > 1:
         robot_id    = sys.argv[1]#pegar via argumento
