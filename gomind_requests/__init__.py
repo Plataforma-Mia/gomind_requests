@@ -657,7 +657,7 @@ def s3_link_generate(s3_file_path: str, client_id: str | int, robot_id: str | in
     logger.log("Download de arquivos concluído.")
 
 
-def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:int|str='', children_customers: list = [],  archive_name:str='', path_url:str='', end_time: bool=False):
+def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:int|str|list = [], children_customers: list = [],  archive_name:str='', path_url:str='', end_time: bool=False):
     '''Função para enviar o step para a MIA\n
     :param action: ação que está sendo realizada
     :param step: passo do processo
@@ -673,7 +673,10 @@ def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:i
     
     MES_MIA     = CLI_ARGUMENTS.get('competenceMonth') or ""
     ANO_MIA     = CLI_ARGUMENTS.get('competenceYear') or ""
-    instance_id = get_instance_id() or None
+    try:
+        instance_id = get_instance_id()
+    except:
+        istance_id = None
     USER_ID     = CLI_ARGUMENTS.get('userId') or 95
     
     if len(sys.argv) > 1:
