@@ -696,9 +696,11 @@ def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:i
     match step:
         case "START":
             step = steps[0]
-            data = getCustomersByRobot(url, token, robot_id, customer_id)
-            children_customers  = [row.id for row in data.customers]
-            erp_code            = [row.erp_code for row in data.customers]
+            data = dataConfig(url, token, robot_id, customer_id)
+            if data:
+                children_customers  = [row.id for row in data.customers]
+                erp_code            = [row.erp_code for row in data.customers]
+    
         case "ERROR":
             step            = steps[-1]
             actionMensage   = getBugInfo(url, token, robot_id, action)
