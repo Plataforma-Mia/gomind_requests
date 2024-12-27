@@ -676,7 +676,7 @@ def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:i
     try:
         instance_id = get_instance_id()
     except:
-        istance_id = None
+        instance_id = None
     USER_ID     = CLI_ARGUMENTS.get('userId') or 95
     
     if len(sys.argv) > 1:
