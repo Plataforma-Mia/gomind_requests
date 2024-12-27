@@ -657,7 +657,7 @@ def s3_link_generate(s3_file_path: str, client_id: str | int, robot_id: str | in
     logger.log("Download de arquivos concluído.")
 
 
-def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:int|str|list = [], children_customers: list = [],  archive_name:str='', path_url:str='', end_time: bool=False):
+def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:int|str|list = [],  archive_name:str='', path_url:str='', end_time: bool=False, children_customers: list = []):
     '''Função para enviar o step para a MIA\n
     :param action: ação que está sendo realizada
     :param step: passo do processo
@@ -696,6 +696,9 @@ def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:i
     match step:
         case "START":
             step = steps[0]
+            data = getCustomersByRobot(url, token, robot_id, customer_id)
+            children_customers  = [row.id for row in data.customers]
+            erp_code            = [row.erp_code for row in data.customers]
         case "ERROR":
             step            = steps[-1]
             actionMensage   = getBugInfo(url, token, robot_id, action)
