@@ -16,12 +16,30 @@ try:
     from logger import logger
 except:
     class Logger:
+        def get_log_filename(self):
+            return None
         def log(self, message, status="info"):
             print("{} - [{}]".format(message, status))
 
     logger = Logger()
     
 CLI_ARGUMENTS = cli.get_sys_args_as_dict()
+try:
+    from constants import LOG_FOLDER
+except:
+    CAMINHO_DO_PROJETO = (
+        CLI_ARGUMENTS.get("path")
+        if CLI_ARGUMENTS.get("path")
+        else '.'
+    )   
+
+    LOG_FOLDER = (
+        CLI_ARGUMENTS.get("logsPath")
+        if CLI_ARGUMENTS.get("logsPath")
+        else os.path.join(CAMINHO_DO_PROJETO, "logs")
+    )
+    
+
 
 start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
@@ -570,17 +588,17 @@ def s3_dowloadAll(client_id:int|str, robot_id:int|str, local_directory:str, comp
                     relative_path = os.path.relpath(s3_key, s3_prefix)
                     local_file_path = os.path.join(local_directory, relative_path)
 
-                    default_ignore = [f'logs{os.sep}', '.zip']
+                    default_ignore = [f'logs{os.sep}', '.db', f'database{os.sep}', 'ARQUIVOS_MIA']
                     to_ignore = to_ignore + default_ignore
 
                     if any(ignore_str in relative_path for ignore_str in to_ignore):
                         continue
-
-                    if competencia and competencia not in relative_path:
+                    
+                    if f"robot_id{os.sep}" in relative_path and relative_path.endswith(".zip"):
+                        logger.log(f"Ignorando {relative_path}")
                         continue
 
-                    # Verificar se o arquivo é um arquivo .zip
-                    if s3_key.endswith('.zip'):
+                    if competencia and competencia not in relative_path:
                         continue
 
                     download_file(s3, bucket_name, s3_key, local_file_path)
@@ -737,7 +755,26 @@ def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:i
         "start_date": start_time,
         "end_date": end_date
     })
-    
+
+def step_error(indice, erp_code, client_id):
+
+    if len(sys.argv) > 1:
+        robot_id    = sys.argv[1]#pegar via argumento
+        customer_id = sys.argv[2]#pegar via argumento
+    else:
+        logger.log("Não foi possível carregar os argumentos")
+        raise Exception('Não foi possível carregar os argumentos na função stepMia()')
+
+    stepMia(
+        indice,
+        'ERROR',
+        log_name= logger.get_log_filename(),
+        path_log= sendFilesToS3(LOG_FOLDER, customer_id, robot_id, s3Dir_name='logs'),
+        erp_code= erp_code,
+        children_customers= client_id,
+        end_time= True
+    )
+
 def get_db_in_xlsx(caminho):
     '''Função para baixar o banco de dados da MIA em formato xlsx'''
     try:
