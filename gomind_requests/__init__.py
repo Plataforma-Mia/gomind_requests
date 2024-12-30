@@ -675,7 +675,7 @@ def s3_link_generate(s3_file_path: str, client_id: str | int, robot_id: str | in
     logger.log("Download de arquivos concluído.")
 
 
-def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:int|str|list = [],  archive_name:str='', path_url:str='', end_time: bool=False, children_customers: list = []):
+def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:int|str|list = [],  archive_name:str='', path_url:str='', end_time: bool=False, children_customers: list = [], path_url_folder: str='', report_url: str ='') -> None:
     '''Função para enviar o step para a MIA\n
     :param action: ação que está sendo realizada
     :param step: passo do processo
