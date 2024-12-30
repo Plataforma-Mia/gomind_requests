@@ -775,6 +775,10 @@ def step_error(indice, erp_code, client_id):
         end_time= True
     )
 
+def step_encerrado(zip_path: str = '' , erp_code: list = [], children_customers: list = []):
+    #encerrado
+    return
+
 def get_db_in_xlsx(caminho):
     '''Função para baixar o banco de dados da MIA em formato xlsx'''
     try:
