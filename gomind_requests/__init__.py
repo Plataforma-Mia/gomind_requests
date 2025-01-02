@@ -25,7 +25,7 @@ except:
     
 CLI_ARGUMENTS = cli.get_sys_args_as_dict()
 try:
-    from constants import LOG_FOLDER
+    from constants import LOG_FOLDER, CAMINHO_DO_PROJETO
 except:
     CAMINHO_DO_PROJETO = (
         CLI_ARGUMENTS.get("path")
@@ -577,32 +577,30 @@ def s3_dowloadAll(client_id:int|str, robot_id:int|str, local_directory:str, comp
         s3 = boto3.client('s3')
 
         # Lista todos os objetos no bucket com o prefixo especificado
-        paginator = s3.get_paginator('list_objects_v2')
-        pages = paginator.paginate(Bucket=bucket_name, Prefix=s3_prefix)
+        response = s3.list_objects_v2(Bucket=bucket_name, Prefix=s3_prefix)
+        objects = response.get("Contents", [])
 
-        # Itera sobre os arquivos e faz o download recursivo
-        for page in pages:
-            if 'Contents' in page:
-                for obj in page['Contents']:
-                    s3_key = obj['Key']
-                    relative_path = os.path.relpath(s3_key, s3_prefix)
-                    local_file_path = os.path.join(local_directory, relative_path)
+        for obj in objects:
 
-                    default_ignore = [f'logs{os.sep}', '.db', f'database{os.sep}', 'ARQUIVOS_MIA']
-                    to_ignore = to_ignore + default_ignore
+            s3_key          = obj.get('Key')
+            relative_path   = os.path.relpath(s3_key, s3_prefix)
 
-                    if any(ignore_str in relative_path for ignore_str in to_ignore):
-                        continue
-                    
-                    if f"robot_id{os.sep}" in relative_path and relative_path.endswith(".zip"):
-                        logger.log(f"Ignorando {relative_path}")
-                        continue
+            if '.zip' in relative_path.split(os.sep)[0]:#ignora arquivos zip da raiz
+                continue
+            
+            local_file_path = os.path.join(local_directory, relative_path)
 
-                    if competencia and competencia not in relative_path:
-                        continue
+            default_ignore  = [f'logs{os.sep}', '.db', f'database{os.sep}', f'ARQUIVOS_MIA{os.sep}', f'RELATORIOS_MIA{os.sep}']
+            to_ignore       = to_ignore + default_ignore
 
-                    download_file(s3, bucket_name, s3_key, local_file_path)
-                    logger.log(f'Arquivo {s3_key} baixado para {local_file_path}')
+            if any(ignore_str in relative_path for ignore_str in to_ignore):
+                continue
+
+            if competencia and competencia not in relative_path:
+                continue
+
+            download_file(s3, bucket_name, s3_key, local_file_path)
+            logger.log(f'Arquivo {s3_key} baixado para {local_file_path}')
 
         return local_directory
     except Exception as e:
@@ -633,12 +631,14 @@ def get_s3_zip(client_id:int|str, robot_id:int|str, local_directory:str, compete
         if mia_db := get_db_in_xlsx(local_directory):
             if not os.path.exists(dir):
                 os.makedirs(dir)
-            shutil.copyfile(mia_db, os.path.join(dir, 'RelatorioMIA.xlsx'))
+                
+            shutil.copyfile(mia_db, os.path.join(dir, os.path.basename(mia_db)))
 
         zip_directory(dir, zip)
         # shutil.rmtree(dir)
 
-        return zip
+        return {"zip": zip, "report": mia_db}
+    
     except Exception as e:
         logger.log(e)
         return False
@@ -748,6 +748,8 @@ def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:i
         "erp_code": erp_code,
         "path_customer": archive_name,
         "path_url_customer": path_url,
+        "path_url_folder": path_url_folder,
+        "path_report": report_url,
         "competence_month": MES_MIA, 
         "competence_year": ANO_MIA,
         "user_id": USER_ID,#95
@@ -775,8 +777,36 @@ def step_error(indice, erp_code, client_id):
         end_time= True
     )
 
-def step_encerrado(zip_path: str = '' , erp_code: list = [], children_customers: list = []):
-    #encerrado
+def step_encerrado(erp_code: list = [], children_customers: list = []):
+    
+    if len(sys.argv) > 1:
+        robot_id    = sys.argv[1]#pegar via argumento
+        customer_id = sys.argv[2]#pegar via argumento
+    else:
+        logger.log("Não foi possível carregar os argumentos")
+        raise Exception('Não foi possível carregar os argumentos na função stepMia()')
+
+    zip_s3        = get_s3_zip(customer_id,robot_id, CAMINHO_DO_PROJETO, f"{ANO_MIA}_{MES_MIA}")
+    s3FilePath    = sendFileToS3(zip_s3.get('zip'), customer_id, robot_id)
+    reportPath    = zip_s3.get('report')
+
+    if os.path.exists(reportPath):
+        reportPath      = sendFileToS3(reportPath, customer_id, robot_id, s3Dir_name='RELATORIOS_MIA')
+    else:
+        reportPath  = None
+
+    stepMia(
+        'Processo finalizado',
+        'FINISH',
+        log_name= logger.get_log_filename(),
+        path_log= sendFilesToS3(LOG_FOLDER, customer_id, robot_id, s3Dir_name='logs'),
+        archive_name='arquivos_baixados.zip',
+        path_url=s3FilePath,
+        erp_code=erp_code,
+        children_customers=children_customers,
+        end_time=True,
+        report_url=reportPath
+    )
     return
 
 def get_db_in_xlsx(caminho):
@@ -795,9 +825,13 @@ def get_db_in_xlsx(caminho):
         if not mia_db:
             logger.log('Não foi possível encontrar o arquivo .db')
             return False
-        
-        sql2excel.SqliteToExcel(os.path.join(caminho, mia_db), os.path.join(caminho), 'RelatorioMIA')
-        return os.path.join(caminho, 'RelatorioMIA.xlsx')
+        current_date    = datetime.now().strftime('%Y%m%H%M%S')
+        competence      = f"{MES_MIA}_{ANO_MIA}"
+        report          = f"RelatorioMIA_{competence}-{current_date}"
+
+        sql2excel.SqliteToExcel(os.path.join(caminho, mia_db), os.path.join(caminho), report)
+
+        return os.path.join(caminho, f"{report}.xlsx")
     
     except Exception as e:
         logger.log(f'Erro em get_db_in_xlsx(): {e}')
