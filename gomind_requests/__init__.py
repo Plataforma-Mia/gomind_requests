@@ -794,6 +794,7 @@ def step_encerrado(erp_code: list = [], children_customers: list = []):
         reportPath      = sendFileToS3(reportPath, customer_id, robot_id, s3Dir_name='RELATORIOS_MIA')
     else:
         reportPath  = None
+        logger.log('Relatório não encontrado')
 
     stepMia(
         'Processo finalizado',
