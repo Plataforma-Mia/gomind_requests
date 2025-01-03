@@ -729,6 +729,8 @@ def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:i
 
         case "FINISH":
             step = steps[-2]
+        case "SUCCESS":
+            step = steps[-3]
         case _:
             if not isinstance(step, int):
                 raise Exception(f'O step [{step}] deve ser um número inteiro')
@@ -798,7 +800,7 @@ def step_encerrado(erp_code: list = [], children_customers: list = []):
 
     stepMia(
         'Processo finalizado',
-        'FINISH',
+        'SUCCESS',
         log_name= logger.get_log_filename(),
         path_log= sendFilesToS3(LOG_FOLDER, customer_id, robot_id, s3Dir_name='logs'),
         archive_name='arquivos_baixados.zip',
