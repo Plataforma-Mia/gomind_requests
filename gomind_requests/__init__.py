@@ -755,7 +755,7 @@ def stepMia(action:str|int, step:str|int, log_name:str, path_log:str, erp_code:i
         "competence_month": MES_MIA, 
         "competence_year": ANO_MIA,
         "user_id": USER_ID,#95
-        "children_customers": children_customers,
+        "customer_child_id": children_customers,
         "start_date": start_time,
         "end_date": end_date
     })
